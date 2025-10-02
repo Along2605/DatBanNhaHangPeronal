@@ -133,7 +133,6 @@ public class ManHinhChinh extends JFrame {
         public JMenu createDoanhThuMenu() {
             JMenu menu = createMenu("Doanh thu");
             menu.add(createMenuItem("Thống kê trong ngày", null));
-            menu.add(createMenuItem("Xuất", null));
             return menu;
         }
     }
