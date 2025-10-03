@@ -24,8 +24,9 @@ public class ManHinhChinhQuanLy extends JFrame {
     }
 
     public ManHinhChinhQuanLy() {
+    	 setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 100, 800, 500);
+        setBounds(100, 10, 1200, 700);
         setTitle("Quản Lý Nhà Hàng");
 
         // Set BorderLayout for the entire frame
@@ -68,7 +69,7 @@ public class ManHinhChinhQuanLy extends JFrame {
         // Add background image
         JLabel lblBackground = new JLabel();
         ImageIcon bgIcon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\DatBanNhaHang\\img\\thiet-ke-nha-hang-han-quoc.jpg");
-        Image bgImage = bgIcon.getImage().getScaledInstance(800, 500, Image.SCALE_SMOOTH);
+        Image bgImage = bgIcon.getImage().getScaledInstance(1200, 700, Image.SCALE_SMOOTH);
         lblBackground.setIcon(new ImageIcon(bgImage));
         lblBackground.setHorizontalAlignment(JLabel.CENTER);
         contentPane.add(lblBackground, BorderLayout.CENTER);
