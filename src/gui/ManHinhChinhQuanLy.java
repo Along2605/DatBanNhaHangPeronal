@@ -4,6 +4,9 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+
+import connectDB.ConnectDB;
+
 import java.awt.event.*;
 
 public class ManHinhChinhQuanLy extends JFrame {
@@ -11,7 +14,25 @@ public class ManHinhChinhQuanLy extends JFrame {
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
     private JMenuBar menuBar;
+    
+    private static JPanel mainPanelRef;
 
+    public static void showPanel(JPanel panel) {
+    	Component[] comps = mainPanelRef.getComponents();
+        for (Component c : comps) {
+            if (c instanceof JPanel p) {
+                p.removeAll();           // Dọn sạch bên trong
+                p.setVisible(false);
+            }
+        }
+        mainPanelRef.removeAll();        // Xóa khỏi container chính
+        System.gc();                     // Gợi ý Java dọn rác (tạm thời)
+        
+        mainPanelRef.add(panel, BorderLayout.CENTER);
+        mainPanelRef.revalidate();
+        mainPanelRef.repaint();
+    }
+    
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
@@ -22,13 +43,43 @@ public class ManHinhChinhQuanLy extends JFrame {
             }
         });
     }
+    
+    
 
     public ManHinhChinhQuanLy() {
-    	 setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 10, 1200, 700);
+    	setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        
+        // thoát ứng dụng và đóng kết nối database      
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int confirm = JOptionPane.showConfirmDialog(
+                    ManHinhChinhQuanLy.this,
+                    "Bạn có chắc muốn thoát không?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    ConnectDB.getInstance().close();
+                    System.exit(0);
+                }
+            }
+        });
         setTitle("Quản Lý Nhà Hàng");
 
+        // Thiết lập layout cho toàn bộ frame
+        getContentPane().setLayout(new BorderLayout());
+        
+        
+     // Lấy kích thước màn hình và thiết lập kích thước cửa sổ
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        setBounds(0, 0, screenSize.width, screenSize.height);
+
+        // Hiển thị cửa sổ
+        setVisible(true);
+        
         // Set BorderLayout for the entire frame
         getContentPane().setLayout(new BorderLayout());
 
@@ -44,7 +95,7 @@ public class ManHinhChinhQuanLy extends JFrame {
         lblNewLabel.setSize(new Dimension(60, 60));
         lblNewLabel.setBackground(new Color(214, 116, 76, 180));
         lblNewLabel.setOpaque(true);
-        ImageIcon icon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\DatBanNhaHang\\img\\logo_nhahang.png");
+        ImageIcon icon = new ImageIcon("img\\logo_nhahang.png");
         Image img = icon.getImage().getScaledInstance(lblNewLabel.getWidth(), lblNewLabel.getHeight(), Image.SCALE_SMOOTH);
         lblNewLabel.setIcon(new ImageIcon(img));
         menuBar.add(lblNewLabel);
@@ -65,16 +116,18 @@ public class ManHinhChinhQuanLy extends JFrame {
         contentPane.setBackground(new Color(245, 245, 245));
         contentPane.setLayout(new BorderLayout());
         getContentPane().add(contentPane, BorderLayout.CENTER);
-
+        
+        mainPanelRef = contentPane;
+        
         // Add background image
         JLabel lblBackground = new JLabel();
-        ImageIcon bgIcon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\DatBanNhaHang\\img\\thiet-ke-nha-hang-han-quoc.jpg");
-        Image bgImage = bgIcon.getImage().getScaledInstance(1200, 700, Image.SCALE_SMOOTH);
+        ImageIcon bgIcon = new ImageIcon("img\\thiet-ke-nha-hang-han-quoc.jpg");
+        Image bgImage = bgIcon.getImage().getScaledInstance(screenSize.width, screenSize.height, Image.SCALE_SMOOTH);
         lblBackground.setIcon(new ImageIcon(bgImage));
         lblBackground.setHorizontalAlignment(JLabel.CENTER);
         contentPane.add(lblBackground, BorderLayout.CENTER);
     }
-
+    
     // MenuBuilder class to create menus and menu items consistently
     private static class MenuBuilderQuanLy {
         private final Font menuFont = new Font("Segoe UI", Font.BOLD, 14);
@@ -105,24 +158,32 @@ public class ManHinhChinhQuanLy extends JFrame {
         public JMenu createHeThongMenu() {
             JMenu menu = createMenu("Hệ thống");
             menu.add(createMenuItem("Màn hình chính", null));
+            menu.add(createMenuItem("Đăng xuất", e-> {
+            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
+            	if(topFrame !=null) {
+            		topFrame.dispose();  // đóng mh chính
+            	}
+            	new DangNhap().setVisible(true);
+            }));
             menu.add(createMenuItem("Thoát", e -> System.exit(0)));
             return menu;
         }
 
-        public JMenu createMonAnMenu() {
+       
+		public JMenu createMonAnMenu() {
             JMenu menu = createMenu("Món ăn");
-            menu.add(createMenuItem("Thêm", null));
-            menu.add(createMenuItem("Cập nhật", null));
-            menu.add(createMenuItem("Tra cứu", null));
+       
+            menu.add(createMenuItem("Cập nhật", e-> showPanel(new ThemMonAn())));
+            menu.add(createMenuItem("Tra cứu", e->showPanel(new TraCuuMonAn())));
             menu.add(createMenuItem("Thống kê", null));
             return menu;
         }
 
         public JMenu createKhuVucMenu() {
             JMenu menu = createMenu("Khu vực");
-            menu.add(createMenuItem("Xem danh sách", null));
-            menu.add(createMenuItem("Thêm khu vực mới", null));
-            menu.add(createMenuItem("Cập nhật", null));
+            menu.add(createMenuItem("Xem danh sách bàn ăn", null));
+            menu.add(createMenuItem("Cập nhật bàn ăn", e -> showPanel(new ThemBanAn())));
+            menu.add(createMenuItem("Tra cứu bàn ăn", e -> showPanel(new TraCuuBanAn())));
             
             return menu;
         }
@@ -137,8 +198,8 @@ public class ManHinhChinhQuanLy extends JFrame {
 
         public JMenu createNhanVienMenu() {
             JMenu menu = createMenu("Nhân viên");
-            menu.add(createMenuItem("Xem danh sách", null));
-            menu.add(createMenuItem("Cập nhật", null));
+            menu.add(createMenuItem("Xem danh sách", e-> showPanel(new ManHinhDSNhanVien())));
+            menu.add(createMenuItem("Cập nhật", e-> showPanel(new ManHinhCapNhatNhanVien())));
             menu.add(createMenuItem("Phân quyền", null));
             menu.add(createMenuItem("Thống kê", null));
             return menu;

@@ -6,5 +6,9 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="lib"/>
+	<classpathentry kind="src" path="sql"/>
+	<classpathentry kind="lib" path="G:/My Drive/PTUD/DatBanNhaHang/lib/mssql-jdbc-12.6.1.jre11.jar"/>
+	<classpathentry kind="lib" path="G:/My Drive/PTUD/DatBanNhaHang/lib/jcalendar-1.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
