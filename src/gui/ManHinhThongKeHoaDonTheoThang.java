@@ -19,7 +19,7 @@ import org.jfree.ui.RectangleInsets;
 
 import java.util.Random;
 
-public class ManHinhThongKeHoaDon extends JFrame{
+public class ManHinhThongKeHoaDonTheoThang extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
@@ -32,7 +32,7 @@ public class ManHinhThongKeHoaDon extends JFrame{
     private JTable table;
     
     public static void showPanel(JPanel panel) {
-    	Component[] comps = mainPanelRef.getComponents();
+        Component[] comps = mainPanelRef.getComponents();
         for (Component c : comps) {
             if (c instanceof JPanel p) {
                 p.removeAll();           // Dọn sạch bên trong
@@ -50,59 +50,56 @@ public class ManHinhThongKeHoaDon extends JFrame{
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
-                ManHinhThongKeHoaDon frame = new ManHinhThongKeHoaDon();
+                JFrame frame = new JFrame("Quản Lý Nhà Hàng");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                frame.setBounds(0, 0, screenSize.width, screenSize.height);
+                frame.setLocationRelativeTo(null);
+                
+                ManHinhThongKeHoaDonTheoThang panel = new ManHinhThongKeHoaDonTheoThang();
+                frame.add(panel, BorderLayout.CENTER);
                 frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
-    
-    
 
-    public ManHinhThongKeHoaDon() {
-    	setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        
-        // thoát ứng dụng và đóng kết nối database      
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                int confirm = JOptionPane.showConfirmDialog(
-                    ManHinhThongKeHoaDon.this,
-                    "Bạn có chắc muốn thoát không?",
-                    "Xác nhận",
-                    JOptionPane.YES_NO_OPTION
-                );
+    public ManHinhThongKeHoaDonTheoThang() {
+        // Thiết lập layout cho panel
+        setLayout(new BorderLayout());
 
-                if (confirm == JOptionPane.YES_OPTION) {
-                    ConnectDB.getInstance().close();
-                    System.exit(0);
+        // Xử lý sự kiện đóng cửa sổ cho frame chứa panel
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.PARENT_CHANGED) != 0) {
+                Component parent = SwingUtilities.getRoot(this);
+                if (parent instanceof JFrame frame) {
+                    frame.addWindowListener(new WindowAdapter() {
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            int confirm = JOptionPane.showConfirmDialog(
+                                ManHinhThongKeHoaDonTheoThang.this,
+                                "Bạn có chắc muốn thoát không?",
+                                "Xác nhận",
+                                JOptionPane.YES_NO_OPTION
+                            );
+
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                ConnectDB.getInstance().close();
+                                System.exit(0);
+                            }
+                        }
+                    });
                 }
             }
         });
-        setTitle("Quản Lý Nhà Hàng");
-
-        // Thiết lập layout cho toàn bộ frame
-        getContentPane().setLayout(new BorderLayout());
-        
-        
-     // Lấy kích thước màn hình và thiết lập kích thước cửa sổ
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(0, 0, screenSize.width, screenSize.height);
-
-        // Hiển thị cửa sổ
-        setVisible(true);
-        
-        // Set BorderLayout for the entire frame
-        getContentPane().setLayout(new BorderLayout());
 
         // Initialize JMenuBar
         menuBar = new JMenuBar();
         menuBar.setBorder(new LineBorder(new Color(0, 0, 0)));
         menuBar.setBackground(new Color(214, 116, 76, 255));
         menuBar.setLayout(new FlowLayout(FlowLayout.LEFT));
-        setJMenuBar(menuBar);
+        add(menuBar, BorderLayout.NORTH);
 
         // Add logo
         JLabel lblNewLabel = new JLabel("");
@@ -128,7 +125,7 @@ public class ManHinhThongKeHoaDon extends JFrame{
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         contentPane.setBackground(new Color(245, 245, 245));
-        getContentPane().add(contentPane, BorderLayout.CENTER);
+        add(contentPane, BorderLayout.CENTER);
         
         mainPanelRef = contentPane;
 
@@ -249,7 +246,7 @@ public class ManHinhThongKeHoaDon extends JFrame{
         contentPane.add(panelBieuDo);
         panelBieuDo.setLayout(new BorderLayout());
         
-        // Tạo dữ liệu ngẫu nhiên cho biểu đồ (có thể chỉnh sửa dễ dàng bằng cách thay đổi mảng hoặc phương thức này)
+        // Tạo dữ liệu ngẫu nhiên cho biểu đồ
         DefaultCategoryDataset dataset = createRevenueDataset();
         
         // Tạo biểu đồ cột đứng
@@ -262,7 +259,7 @@ public class ManHinhThongKeHoaDon extends JFrame{
             true, true, false
         );
         
-     // Lấy trục hoành (trục ngày)
+        // Lấy trục hoành (trục ngày)
         var domainAxis = barChart.getCategoryPlot().getDomainAxis();
         // Giữ nhãn nằm ngang
         domainAxis.setCategoryLabelPositions(
@@ -276,7 +273,7 @@ public class ManHinhThongKeHoaDon extends JFrame{
         domainAxis.setMaximumCategoryLabelWidthRatio(1.0f);
         domainAxis.setTickLabelsVisible(true);
         
-     // Lấy trục tung (trục giá trị)
+        // Lấy trục tung (trục giá trị)
         var rangeAxis = barChart.getCategoryPlot().getRangeAxis();
 
         // Giảm kích cỡ chữ trục tung để đồng bộ với trục hoành
@@ -285,11 +282,9 @@ public class ManHinhThongKeHoaDon extends JFrame{
         // Hiển thị rõ ràng các nhãn
         rangeAxis.setTickLabelsVisible(true);
 
-        // (Tùy chọn) điều chỉnh khoảng cách giữa nhãn và trục
+        // Điều chỉnh khoảng cách giữa nhãn và trục
         rangeAxis.setLabelInsets(new RectangleInsets(5, 5, 5, 5));
 
-
-        
         // Tạo ChartPanel và thêm vào panelBieuDo
         ChartPanel chartPanel = new ChartPanel(barChart);
         chartPanel.setPreferredSize(new Dimension(620, 343));
@@ -342,31 +337,28 @@ public class ManHinhThongKeHoaDon extends JFrame{
         model = new DefaultTableModel(tableHeader, 0);
         table = new JTable(model);
         scrollPane.setViewportView(table);
-        
-
     }
     
-//    dataset
+    // Dataset
     private DefaultCategoryDataset createRevenueDataset() {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         Random rand = new Random();
         
         for (int day = 1; day <= 30; day++) {
-        	if(day == 1) {
-        		dataset.addValue(254, "Doanh thu", day+"");
-        		continue;
-        		}
+            if (day == 1) {
+                dataset.addValue(254, "Doanh thu", day + "");
+                continue;
+            }
             // Doanh thu ngẫu nhiên từ 100,000,000 đến 1,000,000,000 VND
             long revenue = 100_000_000 + (long)(rand.nextDouble() * (1_000_000_000 - 100_000_000));
             
             // Thêm vào dataset, chia cho 1,000,000 để hiển thị theo triệu VND
-            dataset.addValue(revenue / 1_000_000.0, "Doanh thu", day+"");
+            dataset.addValue(revenue / 1_000_000.0, "Doanh thu", day + "");
         }
         
         return dataset;
     }
 
-    
     // MenuBuilder class to create menus and menu items consistently
     private static class MenuBuilderQuanLy {
         private final Font menuFont = new Font("Segoe UI", Font.BOLD, 14);
@@ -397,23 +389,21 @@ public class ManHinhThongKeHoaDon extends JFrame{
         public JMenu createHeThongMenu() {
             JMenu menu = createMenu("Hệ thống");
             menu.add(createMenuItem("Màn hình chính", null));
-            menu.add(createMenuItem("Đăng xuất", e-> {
-            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
-            	if(topFrame !=null) {
-            		topFrame.dispose();  // đóng mh chính
-            	}
-//            	new DangNhap().setVisible(true);
+            menu.add(createMenuItem("Đăng xuất", e -> {
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
+                if (topFrame != null) {
+                    topFrame.dispose();  // Đóng màn hình chính
+                }
+                // new DangNhap().setVisible(true);
             }));
             menu.add(createMenuItem("Thoát", e -> System.exit(0)));
             return menu;
         }
 
-       
-		public JMenu createMonAnMenu() {
+        public JMenu createMonAnMenu() {
             JMenu menu = createMenu("Món ăn");
-       
-//            menu.add(createMenuItem("Cập nhật", e-> showPanel(new ThemMonAn())));
-//            menu.add(createMenuItem("Tra cứu", e->showPanel(new TraCuuMonAn())));
+            // menu.add(createMenuItem("Cập nhật", e -> showPanel(new ThemMonAn())));
+            // menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuMonAn())));
             menu.add(createMenuItem("Thống kê", null));
             return menu;
         }
@@ -421,9 +411,8 @@ public class ManHinhThongKeHoaDon extends JFrame{
         public JMenu createKhuVucMenu() {
             JMenu menu = createMenu("Khu vực");
             menu.add(createMenuItem("Xem danh sách bàn ăn", null));
-//            menu.add(createMenuItem("Cập nhật bàn ăn", e -> showPanel(new ThemBanAn())));
-//            menu.add(createMenuItem("Tra cứu bàn ăn", e -> showPanel(new TraCuuBanAn())));
-            
+            // menu.add(createMenuItem("Cập nhật bàn ăn", e -> showPanel(new ThemBanAn())));
+            // menu.add(createMenuItem("Tra cứu bàn ăn", e -> showPanel(new TraCuuBanAn())));
             return menu;
         }
 
@@ -437,8 +426,8 @@ public class ManHinhThongKeHoaDon extends JFrame{
 
         public JMenu createNhanVienMenu() {
             JMenu menu = createMenu("Nhân viên");
-//            menu.add(createMenuItem("Xem danh sách", e-> showPanel(new ManHinhDSNhanVien())));
-//            menu.add(createMenuItem("Cập nhật", e-> showPanel(new ManHinhCapNhatNhanVien())));
+            // menu.add(createMenuItem("Xem danh sách", e -> showPanel(new ManHinhDSNhanVien())));
+            // menu.add(createMenuItem("Cập nhật", e -> showPanel(new ManHinhCapNhatNhanVien())));
             menu.add(createMenuItem("Phân quyền", null));
             menu.add(createMenuItem("Thống kê", null));
             return menu;
