@@ -1,6 +1,8 @@
 package entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NhanVien {
     private String maNV;
@@ -12,16 +14,18 @@ public class NhanVien {
     private String chucVu;
     private LocalDate ngayVaoLam;
     private boolean trangThai; // true: Đang làm việc, false: Đã nghỉ việc
-    private CaLamViec caLam;
-
+    private List<LichLamViec> danhSachLichLam;
+    
+    
+   
     public NhanVien(){
-
+    	danhSachLichLam= new ArrayList<LichLamViec>();
     }
     public NhanVien(String maNV){
         this.maNV = maNV;
     }
     public NhanVien(String maNV, String hoTen, LocalDate ngaySinh, String email, String soDienThoai, boolean gioiTinh,
-            String chucVu, LocalDate ngayVaoLam, boolean trangThai, CaLamViec calam) {
+            String chucVu, LocalDate ngayVaoLam, boolean trangThai) {
         this.maNV = maNV;
         this.hoTen = hoTen;
         this.ngaySinh = ngaySinh;
@@ -31,7 +35,7 @@ public class NhanVien {
         this.chucVu = chucVu;
         this.ngayVaoLam = ngayVaoLam;
         this.trangThai = trangThai;
-        this.caLam=calam;
+        
     }
 
     public String getMaNV() {
@@ -91,12 +95,11 @@ public class NhanVien {
     public void setTrangThai(boolean trangThai) {
         this.trangThai = trangThai;
     }
-	public CaLamViec getCaLam() {
-		return caLam;
+	public List<LichLamViec> getDanhSachLichLam() {
+		return danhSachLichLam;
 	}
-	public void setCaLam(CaLamViec caLam) {
-		this.caLam = caLam;
-	}
+	
+	
     
     
 //    @Override

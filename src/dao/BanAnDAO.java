@@ -93,5 +93,59 @@ public class BanAnDAO {
 		}
 		return null;
 	}
+	
+	public List<BanAn> getDSBanTrong() {
+	    List<BanAn> dsBanAn = new ArrayList<>();
+	    String sql = """
+	        SELECT b.*, k.tenKhuVuc
+	        FROM BanAn b
+	        LEFT JOIN KhuVuc k ON b.maKhuVuc = k.maKhuVuc
+	        WHERE b.trangThai = 'Trống'
+	        """;
+	    Connection con = ConnectDB.getConnection();
+	    if (con == null) {
+	        System.err.println("❌ Database connection is null");
+	        return dsBanAn;
+	    }
+	    try (PreparedStatement stmt = con.prepareStatement(sql);
+	         ResultSet rs = stmt.executeQuery()) {
+	        int count = 0;
+	        while (rs.next()) {
+	            count++;
+	            String maBan = rs.getString("maBan");
+	            String tenBan = rs.getString("tenBan");
+	            int soLuongCho = rs.getInt("soLuongCho");
+	            String loaiBan = rs.getString("loaiBan");
+	            String maKhuVuc = rs.getString("maKhuVuc");
+	            String tenKhuVuc = rs.getString("tenKhuVuc");
+	            KhuVuc khuVuc = null;
+	            if (maKhuVuc != null) {
+	                khuVuc = new KhuVuc(maKhuVuc, tenKhuVuc, null);
+	            }
+	            String ghiChu = rs.getString("ghiChu");
+	            BanAn ban = new BanAn(maBan, tenBan, soLuongCho, loaiBan, "Trống", khuVuc, ghiChu);
+	            dsBanAn.add(ban);
+	        }
+	        System.out.println("Found " + count + " available tables");
+	    } catch (SQLException e) {
+	        System.err.println("❌ Error fetching available tables: " + e.getMessage());
+	        e.printStackTrace();
+	    }
+	    return dsBanAn;
+	}
+	
+	public boolean capNhatTrangThaiBan(String maBan, String trangThaiMoi) {
+	    String sql = "UPDATE BanAn SET trangThai = ? WHERE maBan = ?";
+	    Connection con = ConnectDB.getConnection();
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setString(1, trangThaiMoi);
+	        stmt.setString(2, maBan);
+	        return stmt.executeUpdate() > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
+
     
 }

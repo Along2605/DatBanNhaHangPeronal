@@ -18,15 +18,15 @@ public class ManHinhChinhQuanLy extends JFrame {
     private static JPanel mainPanelRef;
 
     public static void showPanel(JPanel panel) {
-    	Component[] comps = mainPanelRef.getComponents();
+        Component[] comps = mainPanelRef.getComponents();
         for (Component c : comps) {
             if (c instanceof JPanel p) {
-                p.removeAll();           // Dọn sạch bên trong
+                p.removeAll();
                 p.setVisible(false);
             }
         }
-        mainPanelRef.removeAll();        // Xóa khỏi container chính
-        System.gc();                     // Gợi ý Java dọn rác (tạm thời)
+        mainPanelRef.removeAll();
+        System.gc();
         
         mainPanelRef.add(panel, BorderLayout.CENTER);
         mainPanelRef.revalidate();
@@ -44,13 +44,11 @@ public class ManHinhChinhQuanLy extends JFrame {
         });
     }
     
-    
-
     public ManHinhChinhQuanLy() {
-    	setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
-        // thoát ứng dụng và đóng kết nối database      
+        // Thoát ứng dụng và đóng kết nối database      
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -67,35 +65,23 @@ public class ManHinhChinhQuanLy extends JFrame {
                 }
             }
         });
+        
         setTitle("Quản Lý Nhà Hàng");
-<<<<<<< HEAD
+        // Ưu tiên giữ lại việc set frame ở chế độ toàn màn hình
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-=======
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
 
         // Thiết lập layout cho toàn bộ frame
         getContentPane().setLayout(new BorderLayout());
         
-        
-     // Lấy kích thước màn hình và thiết lập kích thước cửa sổ
+        // Lấy kích thước màn hình để sử dụng cho ảnh nền
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(0, 0, screenSize.width, screenSize.height);
-
-        // Hiển thị cửa sổ
-        setVisible(true);
-        
-        // Set BorderLayout for the entire frame
-        getContentPane().setLayout(new BorderLayout());
 
         // Initialize JMenuBar
         menuBar = new JMenuBar();
         menuBar.setBorder(new LineBorder(new Color(0, 0, 0)));
         menuBar.setBackground(new Color(214, 116, 76, 255));
-<<<<<<< HEAD
+        // Giữ lại BoxLayout để có thể đẩy menu tài khoản sang phải
         menuBar.setLayout(new BoxLayout(menuBar, BoxLayout.X_AXIS));
-=======
-        menuBar.setLayout(new FlowLayout(FlowLayout.LEFT));
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
         setJMenuBar(menuBar);
 
         // Add logo
@@ -111,22 +97,18 @@ public class ManHinhChinhQuanLy extends JFrame {
 
         // Use MenuBuilder to create menus
         MenuBuilderQuanLy menuBuilder = new MenuBuilderQuanLy();
-<<<<<<< HEAD
+        // Giữ lại menu "Trang chủ" thay vì menu "Hệ thống" cũ
         menuBar.add(menuBuilder.createTrangChu());
-=======
-        menuBar.add(menuBuilder.createHeThongMenu());
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
         menuBar.add(menuBuilder.createMonAnMenu());
         menuBar.add(menuBuilder.createKhuVucMenu());
         menuBar.add(menuBuilder.createCaLamMenu());
         menuBar.add(menuBuilder.createNhanVienMenu());
         menuBar.add(menuBuilder.createDoanhThuMenu());
-<<<<<<< HEAD
-        menuBar.add(Box.createHorizontalGlue()); //đẩy các componet ra cuối
+        // Sử dụng glue để đẩy menu tài khoản về cuối (bên phải)
+        menuBar.add(Box.createHorizontalGlue()); 
+        // Giữ lại menu Tài khoản mới, hiện đại hơn
         menuBar.add(menuBuilder.createTaiKhoanMenu());
-=======
-
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
+        
         // Initialize contentPane
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -143,6 +125,9 @@ public class ManHinhChinhQuanLy extends JFrame {
         lblBackground.setIcon(new ImageIcon(bgImage));
         lblBackground.setHorizontalAlignment(JLabel.CENTER);
         contentPane.add(lblBackground, BorderLayout.CENTER);
+        
+        // Hiển thị cửa sổ (sau khi tất cả component đã được thêm)
+        setVisible(true);
     }
     
     // MenuBuilder class to create menus and menu items consistently
@@ -172,68 +157,46 @@ public class ManHinhChinhQuanLy extends JFrame {
             return menuItem;
         }
 
-<<<<<<< HEAD
+        // Giữ lại menu "Trang chủ" từ HEAD
         public JMenu createTrangChu() {
             JMenu menu = createMenu("Trang chủ");
-            
             menu.addMouseListener(new MouseAdapter() {
-            	public void mouseClicked(MouseEvent e) {
-					showPanel(new Home());
-				}
+                public void mouseClicked(MouseEvent e) {
+                    showPanel(new Home());
+                }
             });
-=======
-        public JMenu createHeThongMenu() {
-            JMenu menu = createMenu("Hệ thống");
-            menu.add(createMenuItem("Màn hình chính", null));
-            menu.add(createMenuItem("Đăng xuất", e-> {
-            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
-            	if(topFrame !=null) {
-            		topFrame.dispose();  // đóng mh chính
-            	}
-            	new DangNhap().setVisible(true);
-            }));
-            menu.add(createMenuItem("Thoát", e -> System.exit(0)));
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
             return menu;
         }
 
-       
-		public JMenu createMonAnMenu() {
+        public JMenu createMonAnMenu() {
             JMenu menu = createMenu("Món ăn");
-       
-            menu.add(createMenuItem("Cập nhật", e-> showPanel(new ThemMonAn())));
-            menu.add(createMenuItem("Tra cứu", e->showPanel(new TraCuuMonAn())));
+            menu.add(createMenuItem("Cập nhật", e -> showPanel(new ThemMonAn())));
+            menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuMonAn())));
             menu.add(createMenuItem("Thống kê", null));
             return menu;
         }
 
         public JMenu createKhuVucMenu() {
-            JMenu menu = createMenu("Khu vực");
-            menu.add(createMenuItem("Xem danh sách bàn ăn", null));
+            JMenu menu = createMenu("Bàn ăn");
+            menu.add(createMenuItem("Xem danh sách bàn ăn", e -> showPanel(new DanhSachBanAnUI())));
             menu.add(createMenuItem("Cập nhật bàn ăn", e -> showPanel(new ThemBanAn())));
             menu.add(createMenuItem("Tra cứu bàn ăn", e -> showPanel(new TraCuuBanAn())));
-            
             return menu;
         }
 
         public JMenu createCaLamMenu() {
             JMenu menu = createMenu("Ca làm");
-<<<<<<< HEAD
+            // Giữ lại các tên menu item rõ ràng, mô tả hơn từ HEAD
             menu.add(createMenuItem("Tra cứu ca làm", e -> showPanel(new TraCuuCaLam())));
             menu.add(createMenuItem("Phân ca làm", null));
             menu.add(createMenuItem("Cập nhật ca làm", e -> showPanel(new ThemCaLam())));
-=======
-            menu.add(createMenuItem("Tra cứu", null));
-            menu.add(createMenuItem("Phân ca", null));
-            menu.add(createMenuItem("Thêm ca mới", null));
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
             return menu;
         }
 
         public JMenu createNhanVienMenu() {
             JMenu menu = createMenu("Nhân viên");
-            menu.add(createMenuItem("Xem danh sách", e-> showPanel(new ManHinhDSNhanVien())));
-            menu.add(createMenuItem("Cập nhật", e-> showPanel(new ManHinhCapNhatNhanVien())));
+            menu.add(createMenuItem("Xem danh sách", e -> showPanel(new ManHinhDSNhanVien())));
+            menu.add(createMenuItem("Cập nhật", e -> showPanel(new ManHinhCapNhatNhanVien())));
             menu.add(createMenuItem("Phân quyền", null));
             menu.add(createMenuItem("Thống kê", null));
             return menu;
@@ -245,31 +208,41 @@ public class ManHinhChinhQuanLy extends JFrame {
             menu.add(createMenuItem("Thống kê theo tuần", null));
             return menu;
         }
-<<<<<<< HEAD
         
+        // Giữ lại toàn bộ menu tài khoản từ HEAD, đây là một tính năng lớn và hữu ích
         public JMenu createTaiKhoanMenu() {
-        	String gioiTinh = "Nu";
-        	String path = gioiTinh.equalsIgnoreCase("Nam") ? "img/man.png" : "img/woman.png";
-        	ImageIcon iconUser = new ImageIcon(path);
-        	Image imgUser = iconUser.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
-        	iconUser = new ImageIcon(imgUser);
-        	
-        	JMenu menu = createMenu("Xin chào, Nguyễn văn A0"); //test
+            String gioiTinh = "Nu"; // Dữ liệu mẫu
+            String path = gioiTinh.equalsIgnoreCase("Nam") ? "img/man.png" : "img/woman.png";
+            ImageIcon iconUser = new ImageIcon(path);
+            Image imgUser = iconUser.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+            iconUser = new ImageIcon(imgUser);
+            
+            JMenu menu = createMenu("Xin chào, Nguyễn Văn A"); // Tên mẫu
             menu.setIcon(iconUser);
             menu.add(createMenuItem("Thông tin cá nhân", e -> showPanel(new ManHinhCapNhatNhanVien())));
             menu.add(createMenuItem("Đổi mật khẩu", e -> showPanel(new DoiMatKhau())));
             menu.add(createMenuItem("Đăng xuất", e -> {
-            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
-            	if(topFrame !=null) {
-            		topFrame.dispose();  // đóng mh chính
-            	}
-            	new DangNhap().setVisible(true);
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
+                if (topFrame != null) {
+                    topFrame.dispose(); // Đóng màn hình chính
+                }
+                new DangNhap().setVisible(true); // Mở lại màn hình đăng nhập
+            }));
+            // Có thể thêm tùy chọn Thoát ứng dụng ở đây để thay thế cho menu Hệ thống cũ
+            menu.addSeparator();
+            menu.add(createMenuItem("Thoát ứng dụng", e -> {
+                 int confirm = JOptionPane.showConfirmDialog(
+                    mainPanelRef,
+                    "Bạn có chắc muốn thoát ứng dụng không?",
+                    "Xác nhận thoát",
+                    JOptionPane.YES_NO_OPTION
+                );
+                if (confirm == JOptionPane.YES_OPTION) {
+                    ConnectDB.getInstance().close();
+                    System.exit(0);
+                }
             }));
             return menu;
         }
-        
-        
-=======
->>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
     }
 }

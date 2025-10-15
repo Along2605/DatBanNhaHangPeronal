@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import connectDB.ConnectDB;
+import entity.CaLamViec;
 import entity.NhanVien;
 
 public class NhanVienDAO {
@@ -82,6 +83,7 @@ public class NhanVienDAO {
                         rs.getString("chucVu"),
                         rs.getDate("ngayVaoLam").toLocalDate(),
                         rs.getBoolean("trangThai")
+                       
                     );
                     ds.add(nv);
                 }
@@ -104,6 +106,7 @@ public class NhanVienDAO {
                 stmt.setString(1, maNV);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
+                    	
                         return new NhanVien(
                             rs.getString("maNV"),
                             rs.getString("hoTen"),
@@ -113,7 +116,7 @@ public class NhanVienDAO {
                             rs.getBoolean("gioiTinh"),
                             rs.getString("chucVu"),
                             rs.getDate("ngayVaoLam").toLocalDate(),
-                            rs.getBoolean("trangThai")
+                            rs.getBoolean("trangThai")          
                         );
                     }
                 }
