@@ -10,11 +10,11 @@ public class MonAn {
     private  String tenMon;
     private double gia;
     private String donViTinh;
-    private boolean trangThai; // true: con, false: het
+    private boolean trangThai;
     private String hinhAnh;
     private int soLuong;
     private String moTa;
-    private String loaiMon; // Chinh, Phu, Trang mieng, Nuoc uong
+    private String loaiMon;
 
     public MonAn() {
     }
@@ -86,6 +86,6 @@ public class MonAn {
     public void setLoaiMon(String loaiMon) {
         this.loaiMon = loaiMon;
     }
-
+    
 
 }

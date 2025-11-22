@@ -48,4 +48,24 @@ public class KhuVucDAO {
 		return dsKhuVuc;
 	}
 	
+	public String layMaTheoTen(String tenKhuVuc) {
+	    String ma = null;
+	    Connection con = ConnectDB.getConnection();
+	    try {
+	        
+	        String sql = "SELECT maKhuVuc FROM KhuVuc WHERE tenKhuVuc = ?";
+	        PreparedStatement stmt = con.prepareStatement(sql);
+	        stmt.setString(1, tenKhuVuc);
+	        ResultSet rs = stmt.executeQuery();
+	        if(rs.next()) {
+	            ma = rs.getString("maKhuVuc");
+	            
+	        }
+	        stmt.close();
+	  } catch(Exception e) {
+	        e.printStackTrace();
+	    }
+	    return ma;
+	}
+	
 }

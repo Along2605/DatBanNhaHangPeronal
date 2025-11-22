@@ -71,7 +71,7 @@ public class LichLamViecDAO {
             stmt.setString(1, maLich);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                NhanVien nv = nhanVienDAO.timNhanVienTheoMa(rs.getString("maNV"));
+                NhanVien nv = nhanVienDAO.getNhanVienTheoMa(rs.getString("maNV"));
                 CaLamViec ca = caLamViecDAO.timCaLamViecTheoMa(rs.getString("maCa"));
                 return new LichLamViec(
                     rs.getString("maLich"),
@@ -95,7 +95,7 @@ public class LichLamViecDAO {
              PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                NhanVien nv = nhanVienDAO.timNhanVienTheoMa(rs.getString("maNV"));
+                NhanVien nv = nhanVienDAO.getNhanVienTheoMa(rs.getString("maNV"));
                 CaLamViec ca = caLamViecDAO.timCaLamViecTheoMa(rs.getString("maCa"));
                 dsLich.add(new LichLamViec(
                     rs.getString("maLich"),

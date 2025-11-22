@@ -6,6 +6,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import connectDB.ConnectDB;
+import entity.NhanVien;
+import util.Session;
 
 import java.awt.event.*;
 
@@ -33,17 +35,7 @@ public class ManHinhChinhNhanVien extends JFrame {
         mainPanelRef.repaint();
     }
 
-    
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                ManHinhChinhNhanVien frame = new ManHinhChinhNhanVien();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
+   
    
     public ManHinhChinhNhanVien() {
         setLocationRelativeTo(null);
@@ -166,24 +158,22 @@ public class ManHinhChinhNhanVien extends JFrame {
             menu.add(createMenuItem("Danh sách bàn ăn", e -> showPanel(new KhuVuc())));
             menu.add(createMenuItem("Tra cứu", e-> showPanel(new TraCuuBanAn())));
             menu.add(createMenuItem("Đặt bàn", e-> showPanel(new DatBan())));
-            menu.add(createMenuItem("Hủy bàn", null));
+           
             return menu;
         }
 
         public JMenu createKhachHangMenu() {
             JMenu menu = createMenu("Khách hàng");
-            menu.add(createMenuItem("Thêm mới", e -> showPanel(new ThemKhachHang())));
             menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuKhachHang())));
+            
             menu.add(createMenuItem("Thống kê", null));
             return menu;
         }
 
         public JMenu createHoaDonMenu() {
             JMenu menu = createMenu("Hóa đơn");
-            menu.add(createMenuItem("Tra cứu hóa đơn", null));
-            menu.add(createMenuItem("Thống kê trong năm", e->showPanel(new ManHinhThongKeHoaDonTheoNam())));
-            menu.add(createMenuItem("Thống kê trong ng", e->showPanel(new ManHinhThongKeHoaDonTheoNgay())));
-            menu.add(createMenuItem("Thống kê trong th", e->showPanel(new ManHinhThongKeHoaDonTheoThang())));
+            menu.add(createMenuItem("Tra cứu hóa đơn", e-> showPanel(new TraCuuHoaDon())));
+//            menu.add(createMenuItem("Thống kê theo ngày", e->showPanel(new ManHinhThongKeHoaDonTheoNgay())));
             return menu;
         }
 
@@ -203,12 +193,17 @@ public class ManHinhChinhNhanVien extends JFrame {
         	ImageIcon iconUser = new ImageIcon(path);
         	Image imgUser = iconUser.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
         	iconUser = new ImageIcon(imgUser);
+        	NhanVien nv= Session.getNhanVienDangNhap();
         	
-            JMenu menu = createMenu("Xin chào, Nguyễn văn A0"); //test
+        	String ten= nv.getHoTen();
+        	
+            JMenu menu = createMenu("Xin chào, "+ ten) ; //test
             menu.setIcon(iconUser);
-            menu.add(createMenuItem("Thông tin cá nhân", e -> showPanel(new ManHinhCapNhatNhanVien())));
+            menu.add(createMenuItem("Thông tin cá nhân", e -> showPanel(new ThongTinCaNhan())));
             menu.add(createMenuItem("Đổi mật khẩu", e -> showPanel(new DoiMatKhau())));
             menu.add(createMenuItem("Đăng xuất", e -> {
+            	// Xóa thông tin session
+                util.Session.logout();
             	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
             	if(topFrame !=null) {
             		topFrame.dispose();  // đóng mh chính

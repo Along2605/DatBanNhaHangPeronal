@@ -6,7 +6,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -45,22 +47,26 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 
 	private JLabel lblThongTin;
 
-	private JButton btnTaoHoaDon;
+//	private JButton btnTaoHoaDon;
     
-    public TraCuuBanAn() {
-        setLayout(new BorderLayout(10, 10));
-        setBackground(BACKGROUND_COLOR);
-        setBorder(new EmptyBorder(20, 20, 20, 20));
-        
-        // Add components
-        add(createHeaderPanel(), BorderLayout.NORTH);
-        add(createSearchPanel(), BorderLayout.WEST);
-        add(createTablePanel(), BorderLayout.CENTER);
-        add(createButtonPanel(), BorderLayout.SOUTH);
-        
-        // Load initial data
-        loadDanhSachBanAn();
-    }
+	public TraCuuBanAn() {
+	    setLayout(new BorderLayout(10, 10));
+	    setBackground(BACKGROUND_COLOR);
+	    setBorder(new EmptyBorder(20, 20, 20, 20));
+
+	    // Add components
+	    add(createHeaderPanel(), BorderLayout.NORTH);
+	    add(createSearchPanel(), BorderLayout.WEST);
+	    add(createTablePanel(), BorderLayout.CENTER);
+	    add(createButtonPanel(), BorderLayout.SOUTH);
+
+	    // Load initial data
+	    loadDanhSachBanAn();
+
+	    // Add action listeners for buttons
+	    btnTimKiem.addActionListener(e -> timKiemBanAn());
+	    btnLamMoi.addActionListener(e -> lamMoiForm());
+	}
     
     /**
      * Tạo panel tiêu đề
@@ -110,7 +116,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         addFormField(formPanel, gbc, 1, "Tên bàn:", txtTenBan = createTextField());
         
         // Khu vực
-        cboKhuVuc = createComboBox(new String[]{"-- Tất cả --", "Tầng 1", "Tầng 2", "Sân thượng"});
+        cboKhuVuc = createComboBox(new String[]{"-- Tất cả --", "Khu gia đình", "Khu VIP", "Khu couple", "Khu BBQ ngoài trời", "Phòng riêng Hanok"});
         addFormField(formPanel, gbc, 2, "Khu vực:", cboKhuVuc);
         
         // Trạng thái
@@ -118,9 +124,9 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         addFormField(formPanel, gbc, 3, "Trạng thái:", cboTrangThai);
         
         // Loại bàn
-        cboLoaiBan = createComboBox(new String[]{"-- Tất cả --", "Bàn vuông", "Bàn tròn", "Bàn đôi"});
+        cboLoaiBan = createComboBox(new String[]{"-- Tất cả --", "VIP", "Gia đình", "Couple", "BBQ", "Phòng riêng"});
         addFormField(formPanel, gbc, 4, "Loại bàn:", cboLoaiBan);
-        
+
         // Số lượng chỗ
         addFormField(formPanel, gbc, 5, "Số lượng chỗ:", txtSoLuongCho = createTextField());
         
@@ -131,8 +137,11 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
         
+
         btnTimKiem = createButton("Tìm kiếm", MAIN_COLOR);
+        btnTimKiem.addActionListener(e -> timKiemBanAn());
         btnLamMoi = createButton("Làm mới", new Color(100, 100, 100));
+        btnLamMoi.addActionListener(e -> lamMoiForm());
         
         buttonPanel.add(btnTimKiem);
         buttonPanel.add(btnLamMoi);
@@ -223,14 +232,14 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         btnXemChiTiet = createButton("Xem chi tiết", MAIN_COLOR);
         btnXemChiTiet.setPreferredSize(new Dimension(150, 40));
         
-        btnTaoHoaDon = createButton("Tạo hóa đơn", new Color(76, 175, 80));
-        btnTaoHoaDon.setPreferredSize(new Dimension(150, 40));
+//        btnTaoHoaDon = createButton("Tạo hóa đơn", new Color(76, 175, 80));
+//        btnTaoHoaDon.setPreferredSize(new Dimension(150, 40));
         
         panel.add(btnXemChiTiet);
-        panel.add(btnTaoHoaDon);
+//        panel.add(btnTaoHoaDon);
         
         btnXemChiTiet.addActionListener(this);
-        btnTaoHoaDon.addActionListener(this);
+//        btnTaoHoaDon.addActionListener(this);
         
         return panel;
     }
@@ -320,7 +329,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 	                ban.getMaBan(),
 	                ban.getTenBan(),
 	                ban.getSoLuongCho(),
-	                ban.getLoaiBan(),
+	                ban.getLoaiBan().getTenLoaiBan(),
 	                ban.getTrangThai(),
 	                ban.getKhuVuc() != null ? ban.getKhuVuc().getTenKhuVuc() : "",
 	                ban.getGhiChu()
@@ -335,47 +344,109 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     }
     
     
-    private void taoHoaDon() {
-        int selectedRow = tableBanAn.getSelectedRow();
-        
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this,
-                "Vui lòng chọn một bàn để tạo hóa đơn!",
-                "Thông báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        String maBan = tableModel.getValueAt(selectedRow, 0).toString();
-        BanAn banAn = dao.getBanTheoMa(maBan);
-        
-        if (banAn == null) {
-            JOptionPane.showMessageDialog(this,
-                "Không tìm thấy thông tin bàn!",
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // Mở dialog tạo hóa đơn
-        new DialogTaoHoaDon(
-            (Frame) SwingUtilities.getWindowAncestor(this),
-            banAn,
-            () -> loadDanhSachBanAn() // Callback để refresh lại bảng
-        ).setVisible(true);
-    }
+//    private void taoHoaDon() {
+//        int selectedRow = tableBanAn.getSelectedRow();
+//        
+//        if (selectedRow == -1) {
+//            JOptionPane.showMessageDialog(this,
+//                "Vui lòng chọn một bàn để tạo hóa đơn!",
+//                "Thông báo", JOptionPane.WARNING_MESSAGE);
+//            return;
+//        }
+//        
+//        String maBan = tableModel.getValueAt(selectedRow, 0).toString();
+//        BanAn banAn = dao.getBanTheoMa(maBan);
+//        
+//        if (banAn == null) {
+//            JOptionPane.showMessageDialog(this,
+//                "Không tìm thấy thông tin bàn!",
+//                "Lỗi", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
+//        
+//        // Mở dialog tạo hóa đơn
+//        new DialogTaoHoaDon(
+//            (Frame) SwingUtilities.getWindowAncestor(this),
+//            banAn,
+//            () -> loadDanhSachBanAn() // Callback để refresh lại bảng
+//        ).setVisible(true);
+//    }
     
     
    
     private void timKiemBanAn() {
-        // Lấy điều kiện tìm kiếm
-        String maBan = txtMaBan.getText().trim();
-        String tenBan = txtTenBan.getText().trim();
-        String khuVuc = (String) cboKhuVuc.getSelectedItem();
-        String trangThai = (String) cboTrangThai.getSelectedItem();
-        String loaiBan = (String) cboLoaiBan.getSelectedItem();
-        String soLuongCho = txtSoLuongCho.getText().trim();
-        
-        
-        
+        try {
+
+            String maBan = txtMaBan.getText().trim();
+            String tenBan = txtTenBan.getText().trim();
+            String khuVuc = cboKhuVuc.getSelectedItem().toString();
+            String trangThai = cboTrangThai.getSelectedItem().toString();
+            String loaiBan = cboLoaiBan.getSelectedItem().toString();
+            String soLuongCho = txtSoLuongCho.getText().trim();
+
+            List<BanAn> dsBan = dao.getAllBanAn();
+            if (dsBan == null) {
+                dsBan = new ArrayList<>();
+            }
+
+            List<BanAn> ketQua = dsBan.stream().filter(ban -> {
+                boolean match = true;
+
+                if (!maBan.isEmpty()) {
+                    match = match && ban.getMaBan().toLowerCase().contains(maBan.toLowerCase());
+                }
+
+                if (!tenBan.isEmpty()) {
+                    match = match && ban.getTenBan().toLowerCase().contains(tenBan.toLowerCase());
+                }
+
+                if (!khuVuc.equals("-- Tất cả --")) {
+                    match = match && (ban.getKhuVuc() != null && ban.getKhuVuc().getTenKhuVuc().equals(khuVuc));
+                }
+
+                if (!trangThai.equals("-- Tất cả --")) {
+                    match = match && ban.getTrangThai().equals(trangThai);
+                }
+
+                if (!loaiBan.equals("-- Tất cả --")) {
+                    match = match && ban.getLoaiBan().getTenLoaiBan().equals(loaiBan);
+                }
+
+                // Lọc theo số lượng chỗ
+                if (!soLuongCho.isEmpty()) {
+                    try {
+                        int soCho = Integer.parseInt(soLuongCho);
+                        match = match && ban.getSoLuongCho() == soCho;
+                    } catch (NumberFormatException ex) {
+                        // Nếu số lượng chỗ không phải số, bỏ qua tiêu chí này
+                        match = false;
+                    }
+                }
+
+                return match;
+            }).collect(Collectors.toList());
+
+            // Cập nhật bảng
+            tableModel.setRowCount(0);
+            for (BanAn ban : ketQua) {
+                tableModel.addRow(new Object[] {
+                    ban.getMaBan(),
+                    ban.getTenBan(),
+                    ban.getSoLuongCho(),
+                    ban.getLoaiBan().getTenLoaiBan(),
+                    ban.getTrangThai(),
+                    ban.getKhuVuc() != null ? ban.getKhuVuc().getTenKhuVuc() : "",
+                    ban.getGhiChu()
+                });
+            }
+
+            // Cập nhật thông tin thống kê
+            capNhatThongTin();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi khi tìm kiếm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     /**
@@ -388,8 +459,6 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         cboKhuVuc.setSelectedIndex(0);
         cboTrangThai.setSelectedIndex(0);
         cboLoaiBan.setSelectedIndex(0);
-        
-       
         loadDanhSachBanAn();
     }
     
@@ -414,15 +483,15 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         String maBan = tableModel.getValueAt(selectedRow, 0).toString();
         
         // Lấy thông tin chi tiết từ database
-        
-        BanAn banAn= dao.getBanTheoMa(maBan);
+        BanAn banAn = dao.getBanTheoMa(maBan);
         if (banAn == null) {
             JOptionPane.showMessageDialog(this,
                 "Không tìm thấy thông tin bàn!",
                 "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        new DialogChiTietBanAn((Frame)SwingUtilities.getWindowAncestor(this), banAn).setVisible(true);
+        
+        new DialogChiTietBanAn((Frame) SwingUtilities.getWindowAncestor(this), banAn).setVisible(true);
     }
 
    
@@ -467,9 +536,9 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 		if(o.equals(btnXemChiTiet)) {
 			xemChiTietBanAn();
 		}
-		else if(o== btnTaoHoaDon) {
-			taoHoaDon();
-		}
+//		else if(o== btnTaoHoaDon) {
+//			taoHoaDon();
+//		}
 		
 	}
 

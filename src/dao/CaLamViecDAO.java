@@ -30,6 +30,21 @@ public class CaLamViecDAO {
         }
         return false;
     }
+    
+    public boolean xoaCaLam(String ma) {
+		Connection con = ConnectDB.getConnection();
+		PreparedStatement sta = null;
+		int n = 0;
+		try {
+			String sql = "Delete From CaLamViec Where maCa = ?";
+			sta = con.prepareStatement(sql);
+			sta.setString(1, ma);
+			n = sta.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return n > 0;
+	}
 
     public boolean capNhatCaLamViec(CaLamViec ca) {
         Connection con = ConnectDB.getConnection();
@@ -66,6 +81,7 @@ public class CaLamViecDAO {
                 while (rs.next()) {
                     CaLamViec ca = new CaLamViec(
                         rs.getString("maCa"),
+                        rs.getString("tenCa"),
                         rs.getTime("gioVaoLam").toLocalTime(), // chuyển Time -> LocalTime
                         rs.getTime("gioTanLam").toLocalTime(),
                         rs.getBoolean("trangThai")
@@ -93,6 +109,7 @@ public class CaLamViecDAO {
                     if (rs.next()) {
                         return new CaLamViec(
                             rs.getString("maCa"),
+                            rs.getString("tenCa"),
                             rs.getTime("gioVaoLam").toLocalTime(),
                             rs.getTime("gioTanLam").toLocalTime(),
                             rs.getBoolean("trangThai")
@@ -105,4 +122,28 @@ public class CaLamViecDAO {
         }
         return null;
     }
+
+	public String generateMaCaLam() {
+		// TODO Auto-generated method stub
+	
+		Connection con = ConnectDB.getConnection();
+		PreparedStatement stmt = null;
+		String maMoi = "CA001";
+		try{
+			String sql = "SELECT MAX(CAST(SUBSTRING(maCa, 3, LEN(maCa)-2) AS INT)) AS maxSo FROM CaLamViec";
+			stmt = con.prepareStatement(sql);
+			
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				int maxSo = rs.getInt("maxSo");
+				int soMoi = maxSo + 1;
+				maMoi = String.format("CA%03d", soMoi);
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return maMoi;
+	}
 }

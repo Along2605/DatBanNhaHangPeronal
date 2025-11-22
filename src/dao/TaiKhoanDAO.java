@@ -15,10 +15,10 @@ public class TaiKhoanDAO {
 	private NhanVienDAO nhanVienDAO= new NhanVienDAO();
 	public boolean themTaiKhoan(TaiKhoan tk) throws SQLException {
 		Connection con= ConnectDB.getConnection();
-		if (con == null || con.isClosed()) {
-            ConnectDB.getInstance().connect();
-            con = ConnectDB.getConnection();
-        }
+//		if (con == null || con.isClosed()) {
+//            ConnectDB.getInstance().connect();
+//            con = ConnectDB.getConnection();
+//        }
 		String sql= "insert into TaiKhoan (userName, passWord, maNV, quyenTruyCap) values (?,?,?,?)";
 		try (PreparedStatement stmt= con.prepareStatement(sql)){
 			stmt.setString(1, tk.getUserName());
@@ -36,7 +36,8 @@ public class TaiKhoanDAO {
 	
 	public boolean capNhatTaiKhoan(TaiKhoan tk) {
         String sql = "UPDATE TaiKhoan SET passWord = ?, maNV = ?, quyenTruyCap = ? WHERE userName = ?";
-        try (Connection con = ConnectDB.getConnection();
+        Connection con = ConnectDB.getConnection();
+        try (
              PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, tk.getPassWord());
             stmt.setString(2, tk.getNhanVien().getMaNV());
@@ -51,7 +52,8 @@ public class TaiKhoanDAO {
 	
 	public boolean xoaTaiKhoan(String userName) {
         String sql = "DELETE FROM TaiKhoan WHERE userName = ?";
-        try (Connection con = ConnectDB.getConnection();
+        Connection con = ConnectDB.getConnection();
+        try (
              PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, userName);
             return stmt.executeUpdate() > 0;
@@ -62,13 +64,14 @@ public class TaiKhoanDAO {
     }
 	
 	public TaiKhoan timTaiKhoan(String userName) {
+		Connection con= ConnectDB.getConnection();
 		String sql= "select * from TaiKhoan where userName= ?";
-		try (Connection con= ConnectDB.getConnection();
+		try (
 				PreparedStatement stmt= con.prepareStatement(sql)){
 			stmt.setString(1, userName);
 			ResultSet rs= stmt.executeQuery();
 			if(rs.next()) {
-				NhanVien nv= nhanVienDAO.timNhanVienTheoMa(rs.getString("maNV"));
+				NhanVien nv= nhanVienDAO.getNhanVienTheoMa(rs.getString("maNV"));
 				return new TaiKhoan(rs.getString("userName"), rs.getString("passWord"), nv, rs.getString("quyenTruyCap"));		
 			}
 			
@@ -84,11 +87,12 @@ public class TaiKhoanDAO {
 	public List<TaiKhoan> getAllTaiKhoan(){
 		List<TaiKhoan> dsTK= new ArrayList<TaiKhoan>();
 		String sql= "select * from TaiKhoan";
-		try (Connection con= ConnectDB.getConnection();
+		Connection con= ConnectDB.getConnection();
+		try (
 				PreparedStatement stmt= con.prepareStatement(sql)){
 			ResultSet rs= stmt.executeQuery();
 			while(rs.next()) {
-				NhanVien nv= nhanVienDAO.timNhanVienTheoMa(rs.getString("maNV"));
+				NhanVien nv= nhanVienDAO.getNhanVienTheoMa(rs.getString("maNV"));
 				dsTK.add(new TaiKhoan(rs.getString("userName"),
 						rs.getString("passWord"),
 						nv,

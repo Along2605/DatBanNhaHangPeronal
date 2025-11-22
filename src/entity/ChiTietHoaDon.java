@@ -1,14 +1,15 @@
 package entity;
 
-import entity.KhuyenMai;
-import entity.MonAn;
+
 
 public class ChiTietHoaDon {
     private HoaDon hoaDon;
     private MonAn monAn;
     private int soLuong;
     private double donGia;
-    private KhuyenMai khuyenMai;
+    private double thanhTien;
+    private String ghiChu;
+    
 
     public ChiTietHoaDon() {
     }
@@ -18,13 +19,22 @@ public class ChiTietHoaDon {
         this.monAn = monAn;
     }
 
-    public ChiTietHoaDon(HoaDon hoaDon, MonAn monAn, int soLuong, double donGia, KhuyenMai khuyenMai) {
+    public ChiTietHoaDon(HoaDon hoaDon, MonAn monAn, int soLuong, double donGia, double thanhTien, String ghiChu) {
         this.hoaDon = hoaDon;
         this.monAn = monAn;
         this.soLuong = soLuong;
         this.donGia = donGia;
-        this.khuyenMai = khuyenMai;
+        this.thanhTien= thanhTien;
+        this.ghiChu=ghiChu;
+        
     }
+    
+    public ChiTietHoaDon(String maHoaDon, String maMon, int soLuong2, double gia) {
+		this.hoaDon.setMaHoaDon(maHoaDon);
+		this.monAn.setMaMon(maMon);
+		this.soLuong = soLuong2;
+		this.donGia = gia;
+	}
 
     public HoaDon getHoaDon() {
         return hoaDon;
@@ -58,13 +68,23 @@ public class ChiTietHoaDon {
         this.donGia = donGia;
     }
 
-    public KhuyenMai getKhuyenMai() {
-        return khuyenMai;
-    }
+	public double getThanhTien() {
+		return thanhTien;
+	}
 
-    public void setKhuyenMai(KhuyenMai khuyenMai) {
-        this.khuyenMai = khuyenMai;
-    }
+	public void setThanhTien(double thanhTien) {
+		this.thanhTien = thanhTien;
+	}
+
+	public String getGhiChu() {
+		return ghiChu;
+	}
+
+	public void setGhiChu(String ghiChu) {
+		this.ghiChu = ghiChu;
+	}
+
+    
 }
 
 

@@ -62,54 +62,79 @@ public class ChiTietPhieuDatDAO {
             return false;
         }
     }
+    
+    
+    public List<ChiTietPhieuDat> getMonAnTheoPhieu(String maPhieuDat) {
+        List<ChiTietPhieuDat> dsMonAn = new ArrayList<>();
+        String sql = "SELECT ct.*, ma.tenMon, ma.donViTinh " +
+                     "FROM ChiTietPhieuDat ct " +
+                     "JOIN MonAn ma ON ct.maMon = ma.maMon " +
+                     "WHERE ct.maPhieuDat = ?";
+        
+        Connection con= ConnectDB.getConnection();
+        
+        try ( PreparedStatement stmt = con.prepareStatement(sql)){
+            
+           
+            stmt.setString(1, maPhieuDat);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                // Tạo món ăn
+                MonAn monAn = new MonAn();
+                monAn.setMaMon(rs.getString("maMon"));
+                monAn.setTenMon(rs.getString("tenMon"));
+                monAn.setDonViTinh(rs.getString("donViTinh"));
+                
+                // Tạo chi tiết phiếu đặt
+                ChiTietPhieuDat chiTiet = new ChiTietPhieuDat();
+                chiTiet.setMonAn(monAn);
+                chiTiet.setSoLuong(rs.getInt("soLuong"));
+                chiTiet.setDonGia(rs.getDouble("donGia"));
+                chiTiet.setGhiChu(rs.getString("ghiChu"));
+                
+                dsMonAn.add(chiTiet);
+            }
+            
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi khi lấy món ăn theo phiếu:");
+            e.printStackTrace();
+        }
+        
+        return dsMonAn;
+    }
 
-    // Lấy chi tiết phiếu đặt theo mã phiếu và mã món
-//    public ChiTietPhieuDat timCTPDTheoMaPhieuVaMaMon(String maPhieuDat, String maMon) {
-//        String sql = "SELECT * FROM ChiTietPhieuDat WHERE maPhieuDat = ? AND maMon = ?";
-//        try (Connection con = ConnectDB.getConnection();
-//             PreparedStatement stmt = con.prepareStatement(sql)) {
-//            stmt.setString(1, maPhieuDat);
-//            stmt.setString(2, maMon);
-//            ResultSet rs = stmt.executeQuery();
-//            if (rs.next()) {
-//                PhieuDatBan phieu = phieuDatBanDAO.getPhieuDatTheoMa(rs.getString("maPhieuDat"));
-//                MonAn mon = monAnDAO.layMonAnTheoMa(rs.getString("maMon"));
-//                return new ChiTietPhieuDat(
-//                    phieu,
-//                    mon,
-//                    rs.getInt("soLuong"),
-//                    rs.getDouble("donGia"),
-//                    rs.getString("ghiChu")
-//                );
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
+	
+    
+    
+    public List<ChiTietPhieuDat> getChiTietTheoMaPhieu(String maPhieuDat) {
+        List<ChiTietPhieuDat> ds = new ArrayList<>();
+        String sql = "SELECT maMon, soLuong, donGia, ghiChu FROM ChiTietPhieuDat WHERE maPhieuDat = ?";
+        Connection con= ConnectDB.getConnection();
+        try (
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, maPhieuDat);
+            ResultSet rs = ps.executeQuery();
 
-    // Lấy tất cả chi tiết phiếu đặt theo mã phiếu
-//    public List<ChiTietPhieuDat> getCTPDByMaPhieu(String maPhieuDat) {
-//        List<ChiTietPhieuDat> dsChiTiet = new ArrayList<>();
-//        String sql = "SELECT * FROM ChiTietPhieuDat WHERE maPhieuDat = ?";
-//        try (Connection con = ConnectDB.getConnection();
-//             PreparedStatement stmt = con.prepareStatement(sql)) {
-//            stmt.setString(1, maPhieuDat);
-//            ResultSet rs = stmt.executeQuery();
-//            while (rs.next()) {
-//                PhieuDatBan phieu = phieuDatBanDAO.getPhieuDatTheoMa(rs.getString("maPhieuDat"));
-//                MonAn mon = monAnDAO.layMonAnTheoMa(rs.getString("maMon"));
-//                dsChiTiet.add(new ChiTietPhieuDat(
-//                    phieu,
-//                    mon,
-//                    rs.getInt("soLuong"),
-//                    rs.getDouble("donGia"),
-//                    rs.getString("ghiChu")
-//                ));
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        return dsChiTiet;
-//    }
+            while (rs.next()) {
+                ChiTietPhieuDat ctpd = new ChiTietPhieuDat();
+                ctpd.setPhieuDatBan(new PhieuDatBan(maPhieuDat));
+                ctpd.setMonAn(new MonAn(rs.getString("maMon")));
+                ctpd.setSoLuong(rs.getInt("soLuong"));
+                ctpd.setDonGia(rs.getDouble("donGia"));
+                ctpd.setGhiChu(rs.getString("ghiChu"));
+                ds.add(ctpd);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return ds;
+    }
+    
+    
+
+   
 }

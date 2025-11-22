@@ -16,7 +16,11 @@ public class KhachHang {
     public KhachHang(String maKH) {
         this.maKH = maKH;
     }
-    public KhachHang(String maKH, String hoTen, boolean gioiTinh, String sdt, int diemTichLuy, LocalDate ngayDangKy, boolean trangThai) {
+    
+    
+   
+    
+	public KhachHang(String maKH, String hoTen, boolean gioiTinh, String sdt, int diemTichLuy, LocalDate ngayDangKy, boolean trangThai) {
         this.maKH = maKH;
         this.hoTen = hoTen;
         this.gioiTinh = gioiTinh;

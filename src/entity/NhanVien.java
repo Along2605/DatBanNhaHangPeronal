@@ -14,6 +14,7 @@ public class NhanVien {
     private String chucVu;
     private LocalDate ngayVaoLam;
     private boolean trangThai; // true: Đang làm việc, false: Đã nghỉ việc
+    private String anhDaiDien;
 //    private List<LichLamViec> danhSachLichLam;
     
     
@@ -24,6 +25,7 @@ public class NhanVien {
     public NhanVien(String maNV){
         this.maNV = maNV;
     }
+    
     public NhanVien(String maNV, String hoTen, LocalDate ngaySinh, String email, String soDienThoai, boolean gioiTinh,
             String chucVu, LocalDate ngayVaoLam, boolean trangThai) {
         this.maNV = maNV;
@@ -35,6 +37,21 @@ public class NhanVien {
         this.chucVu = chucVu;
         this.ngayVaoLam = ngayVaoLam;
         this.trangThai = trangThai;
+       
+        
+    }
+    public NhanVien(String maNV, String hoTen, LocalDate ngaySinh, String email, String soDienThoai, boolean gioiTinh,
+            String chucVu, LocalDate ngayVaoLam, boolean trangThai, String anhDaiDien) {
+        this.maNV = maNV;
+        this.hoTen = hoTen;
+        this.ngaySinh = ngaySinh;
+        this.email = email;
+        this.soDienThoai = soDienThoai;
+        this.gioiTinh = gioiTinh;
+        this.chucVu = chucVu;
+        this.ngayVaoLam = ngayVaoLam;
+        this.trangThai = trangThai;
+        this.anhDaiDien= anhDaiDien;
         
     }
 
@@ -95,6 +112,15 @@ public class NhanVien {
     public void setTrangThai(boolean trangThai) {
         this.trangThai = trangThai;
     }
+
+	public String getAnhDaiDien() {
+		return anhDaiDien;
+	}
+
+	public void setAnhDaiDien(String anhDaiDien) {
+		this.anhDaiDien = anhDaiDien;
+	}
+    
 	
 	
     

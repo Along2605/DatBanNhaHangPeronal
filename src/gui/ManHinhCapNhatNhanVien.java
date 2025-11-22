@@ -4,22 +4,38 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener{
+import dao.NhanVienDAO;
+import entity.NhanVien;
+
+public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener {
     private JTextField txtMaNV, txtHoTen, txtNgaySinh, txtEmail, txtSoDienThoai, txtNgayVaoLam;
     private JRadioButton rbNam, rbNu;
     private JComboBox<String> cbChucVu, cbTrangThai;
     private JLabel lblAnh;
     private JButton btnChonAnh, btnLuu, btnHuy;
+    
+    private NhanVienDAO nhanVienDAO;
+    private NhanVien nhanVienHienTai;
+    private Runnable onSaveListener;
+    private String duongDanAnh; // Lưu đường dẫn ảnh đã chọn
+    
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public ManHinhCapNhatNhanVien() {
         setLayout(new BorderLayout(0, 0));
         setBackground(Color.decode("#EAF1F9"));
         setBorder(new EmptyBorder(20, 20, 20, 20));
+        
+        nhanVienDAO = new NhanVienDAO();
 
         // Tiêu đề
         JLabel lblTitle = new JLabel("HỒ SƠ NHÂN VIÊN", SwingConstants.CENTER);
@@ -53,11 +69,14 @@ public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener{
         btnChonAnh.setBackground(new Color(52, 152, 219));
         btnChonAnh.setForeground(Color.WHITE);
         btnChonAnh.setFocusPainted(false);
+        
+        btnChonAnh.setPreferredSize(new Dimension(140, 35));
+        btnChonAnh.setMaximumSize(new Dimension(160, 35));
 
         pnLeft.add(lblAnh);
         pnLeft.add(Box.createVerticalStrut(15));
         pnLeft.add(btnChonAnh);
-        
+
         btnChonAnh.addActionListener(this);
 
         pnMain.add(pnLeft, BorderLayout.WEST);
@@ -113,6 +132,8 @@ public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener{
         pnGioiTinh.setBackground(Color.decode("#EAF1F9"));
         rbNam.setFont(new Font("Arial", Font.PLAIN, 14));
         rbNu.setFont(new Font("Arial", Font.PLAIN, 14));
+        rbNam.setBackground(Color.decode("#EAF1F9"));
+        rbNu.setBackground(Color.decode("#EAF1F9"));
         pnGioiTinh.add(rbNam);
         pnGioiTinh.add(rbNu);
         addLabelAndField(pnRight, gbc, 2, "Giới tính:", pnGioiTinh);
@@ -134,10 +155,170 @@ public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener{
 
         btnLuu = createButton("Lưu", "img/save.png", new Color(46, 204, 113));
         btnHuy = createButton("Hủy", "img/cancel.png", new Color(231, 76, 60));
+        
+        btnLuu.addActionListener(this);
+        btnHuy.addActionListener(this);
+        
         pnButtons.add(btnLuu);
         pnButtons.add(btnHuy);
 
         add(pnButtons, BorderLayout.SOUTH);
+    }
+
+    // Set dữ liệu nhân viên vào form
+    public void setNhanVien(NhanVien nv) {
+        this.nhanVienHienTai = nv;
+        
+        txtMaNV.setText(nv.getMaNV());
+        txtHoTen.setText(nv.getHoTen());
+        txtNgaySinh.setText(nv.getNgaySinh().format(formatter));
+        txtEmail.setText(nv.getEmail());
+        txtSoDienThoai.setText(nv.getSoDienThoai());
+        
+        if (nv.isGioiTinh()) {
+            rbNam.setSelected(true);
+        } else {
+            rbNu.setSelected(true);
+        }
+        
+        cbChucVu.setSelectedItem(nv.getChucVu());
+        txtNgayVaoLam.setText(nv.getNgayVaoLam().format(formatter));
+        
+        if (nv.isTrangThai()) {
+            cbTrangThai.setSelectedIndex(0); // Đang làm việc
+        } else {
+            cbTrangThai.setSelectedIndex(1); // Nghỉ việc
+        }
+        
+     // Load và hiển thị ảnh
+        this.duongDanAnh = nv.getAnhDaiDien();
+        hienThiAnh(nv.getAnhDaiDien());
+    }
+    
+    // Lấy dữ liệu từ form
+    private NhanVien layDuLieuTuForm() {
+        try {
+            String maNV = txtMaNV.getText().trim();
+            String hoTen = txtHoTen.getText().trim();
+            LocalDate ngaySinh = LocalDate.parse(txtNgaySinh.getText().trim(), formatter);
+            String email = txtEmail.getText().trim();
+            String sdt = txtSoDienThoai.getText().trim();
+            boolean gioiTinh = rbNam.isSelected();
+            String chucVu = cbChucVu.getSelectedItem().toString();
+            LocalDate ngayVaoLam = LocalDate.parse(txtNgayVaoLam.getText().trim(), formatter);
+            boolean trangThai = cbTrangThai.getSelectedIndex() == 0;
+        
+            String anhDaiDien = duongDanAnh != null ? duongDanAnh : "";
+            return new NhanVien(maNV, hoTen, ngaySinh, email, sdt, gioiTinh, chucVu, ngayVaoLam, trangThai, anhDaiDien);
+           
+            
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    // Validate dữ liệu
+    private boolean validateData() {
+        if (txtHoTen.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập họ tên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            txtHoTen.requestFocus();
+            return false;
+        }
+        
+        if (txtEmail.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập email!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            txtEmail.requestFocus();
+            return false;
+        }
+        
+        // Validate email format
+        String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+        if (!txtEmail.getText().trim().matches(emailRegex)) {
+            JOptionPane.showMessageDialog(this, "Email không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            txtEmail.requestFocus();
+            return false;
+        }
+        
+        if (txtSoDienThoai.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập số điện thoại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            txtSoDienThoai.requestFocus();
+            return false;
+        }
+        
+        // Validate phone number (10 digits)
+        if (!txtSoDienThoai.getText().trim().matches("\\d{10}")) {
+            JOptionPane.showMessageDialog(this, "Số điện thoại phải có 10 chữ số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            txtSoDienThoai.requestFocus();
+            return false;
+        }
+        
+        if (!rbNam.isSelected() && !rbNu.isSelected()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn giới tính!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        // Validate date format
+        try {
+            LocalDate.parse(txtNgaySinh.getText().trim(), formatter);
+            LocalDate.parse(txtNgayVaoLam.getText().trim(), formatter);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Định dạng ngày không hợp lệ! (dd/MM/yyyy)", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Lưu cập nhật vào database
+    private void luuCapNhat() {
+        if (!validateData()) {
+            return;
+        }
+        
+        NhanVien nv = layDuLieuTuForm();
+        if (nv == null) {
+            JOptionPane.showMessageDialog(this, "Dữ liệu không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Bạn có chắc chắn muốn cập nhật thông tin nhân viên?",
+            "Xác nhận",
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = nhanVienDAO.capNhatNhanVien(nv);
+                
+                if (success) {
+                    JOptionPane.showMessageDialog(this,
+                        "Cập nhật thông tin nhân viên thành công!",
+                        "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    
+                    // Gọi callback để reload danh sách
+                    if (onSaveListener != null) {
+                        onSaveListener.run();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "Cập nhật thông tin nhân viên thất bại!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this,
+                    "Lỗi khi cập nhật: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    // Set listener để xử lý sau khi lưu thành công
+    public void setOnSaveListener(Runnable listener) {
+        this.onSaveListener = listener;
     }
 
     private JTextField createTextField(boolean editable) {
@@ -159,10 +340,16 @@ public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener{
         button.setBackground(color);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
         if (iconPath != null) {
-            ImageIcon icon = new ImageIcon(iconPath);
-            Image img = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            button.setIcon(new ImageIcon(img));
+            try {
+                ImageIcon icon = new ImageIcon(iconPath);
+                Image img = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                button.setIcon(new ImageIcon(img));
+            } catch (Exception e) {
+                // Icon not found, continue without icon
+            }
         }
         return button;
     }
@@ -179,34 +366,109 @@ public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener{
         panel.add(field, gbc);
     }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object o= e.getSource();
-		if(o==btnChonAnh) {
-			// TODO Auto-generated method stub
-			JFileChooser fileChooser = new JFileChooser();
-	        fileChooser.setDialogTitle("Chọn ảnh nhân viên");
-	        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+        
+        if (o == btnChonAnh) {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Chọn ảnh nhân viên");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-	        // Chỉ cho chọn file ảnh (jpg, png, jpeg)
-	        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-	            "Image files", "jpg", "png", "jpeg"
-	        ));
+            // Chỉ cho chọn file ảnh (jpg, png, jpeg)
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Image files", "jpg", "png", "jpeg"
+            ));
 
-	        int result = fileChooser.showOpenDialog(null);
-	        if (result == JFileChooser.APPROVE_OPTION) {
-	            // Lấy file được chọn
-	            File selectedFile = fileChooser.getSelectedFile();
-	            // Tạo ảnh từ file
-	            ImageIcon icon = new ImageIcon(selectedFile.getAbsolutePath());
-	            // Đổi kích thước ảnh cho vừa khung hiển thị
-	            Image img = icon.getImage().getScaledInstance(
-	                lblAnh.getWidth(), lblAnh.getHeight(), Image.SCALE_SMOOTH
-	            );
-	            lblAnh.setIcon(new ImageIcon(img));
-	        }
-		}
-		
-		
-	}
+            int result = fileChooser.showOpenDialog(this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                
+                // Tạo thư mục lưu ảnh nếu chưa tồn tại
+                File employeeDir = new File("img/employees");
+                if (!employeeDir.exists()) {
+                    employeeDir.mkdirs();
+                }
+                
+                // Tạo tên file mới: maNV + extension
+                String maNV = txtMaNV.getText().trim();
+                String extension = getFileExtension(selectedFile.getName());
+                String newFileName = maNV + extension;
+                File destFile = new File(employeeDir, newFileName);
+                
+                try {
+                    // Copy file ảnh vào thư mục employees
+                    Files.copy(
+                        selectedFile.toPath(), 
+                        destFile.toPath(), 
+                        StandardCopyOption.REPLACE_EXISTING
+                    );
+                    
+                    // Lưu đường dẫn tương đối
+                    duongDanAnh = "img/employees/" + newFileName;
+                    
+                    // Hiển thị ảnh
+                    hienThiAnh(duongDanAnh);
+                    
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, 
+                        "Lỗi khi lưu ảnh: " + ex.getMessage(),
+                        "Lỗi", 
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } else if (o == btnLuu) {
+            luuCapNhat();
+        } else if (o == btnHuy) {
+            // Đóng dialog
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof JDialog) {
+                window.dispose();
+            }
+        }
+    }
+    
+ 
+ // Hiển thị ảnh lên label
+    private void hienThiAnh(String duongDan) {
+        if (duongDan == null || duongDan.isEmpty()) {
+            duongDan = "img/employees/default-avatar.png";
+        }
+        
+        try {
+            File imageFile = new File(duongDan);
+            if (imageFile.exists()) {
+                ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
+                
+                // Lấy kích thước của label (nếu chưa có thì dùng kích thước preferred)
+                int width = lblAnh.getWidth() > 0 ? lblAnh.getWidth() : lblAnh.getPreferredSize().width;
+                int height = lblAnh.getHeight() > 0 ? lblAnh.getHeight() : lblAnh.getPreferredSize().height;
+                
+                // Scale ảnh
+                Image img = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                lblAnh.setIcon(new ImageIcon(img));
+                lblAnh.setText(null); // Xóa text nếu có
+            } else {
+                // Nếu file không tồn tại
+                lblAnh.setIcon(null);
+                lblAnh.setText("Không có ảnh");
+                System.out.println("File không tồn tại: " + imageFile.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            lblAnh.setIcon(null);
+            lblAnh.setText("Lỗi load ảnh");
+            e.printStackTrace(); // In ra lỗi chi tiết
+            System.out.println("Đường dẫn lỗi: " + duongDan);
+        }
+    }
+
+    // Lấy extension của file
+    private String getFileExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0 && dotIndex < fileName.length() - 1) {
+            return fileName.substring(dotIndex);
+        }
+        return ".jpg"; // Mặc định
+    }
 }

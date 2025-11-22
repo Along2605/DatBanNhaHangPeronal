@@ -6,16 +6,20 @@ import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import javax.swing.*;
 
 import connectDB.ConnectDB;
 
 public class DangNhap extends JFrame implements ActionListener{
-    private JTextField txtUser;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JTextField txtUser;
     private JPasswordField txtPass;
 	private JButton btnLogin;
+	private JButton btnDangNhapNhanh;
 
     public DangNhap() {
         setTitle("Đăng nhập - Seoul Cuisine");
@@ -139,15 +143,27 @@ public class DangNhap extends JFrame implements ActionListener{
         btnLogin.setBackground(Color.GREEN);
         btnLogin.setFont(new Font("SansSerif", Font.BOLD, 18));
         rightPanel.add(btnLogin, gbc);
-        btnLogin.addActionListener(this);
+
+     // ===== Nút đăng nhập nhanh =====
+     gbc.gridy = 5;
+     gbc.gridx = 1;
+
+     btnDangNhapNhanh = new JButton("Đăng nhập nhanh");
+     btnDangNhapNhanh.setBackground(Color.YELLOW);
+     btnDangNhapNhanh.setFont(new Font("SansSerif", Font.BOLD, 16));
+     rightPanel.add(btnDangNhapNhanh, gbc);
+
+     btnDangNhapNhanh.addActionListener(e -> {
+         txtUser.setText("admin");
+         txtPass.setText("admin123");
+         btnLogin.doClick();
+     });
+
+     btnLogin.addActionListener(this);
         mainPanel.add(rightPanel);
               
             
     }
-    
-    
-    
-    
     
 
 
@@ -155,9 +171,6 @@ public class DangNhap extends JFrame implements ActionListener{
     	
         SwingUtilities.invokeLater(() -> new DangNhap().setVisible(true));
     }
-
-    
-
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -167,13 +180,13 @@ public class DangNhap extends JFrame implements ActionListener{
 			
 			if(userName.isEmpty() || passWord.isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ userName và passWord", "Lỗi", JOptionPane.ERROR_MESSAGE);
-				
+				return;
 			}
 			
 			ConnectDB.getInstance().connect();
 			Connection con= ConnectDB.getConnection();
 			try {
-				String sql = "SELECT quyenTruyCap FROM TaiKhoan WHERE userName = ? AND passWord = ?";
+				String sql = "SELECT maNV, quyenTruyCap FROM TaiKhoan WHERE userName = ? AND passWord = ?";
                 PreparedStatement stmt = con.prepareStatement(sql);
                 stmt.setString(1, userName);
                 stmt.setString(2, passWord);
@@ -181,7 +194,30 @@ public class DangNhap extends JFrame implements ActionListener{
                 
                 
                 if (rs.next()) {
+                	String maNV= rs.getString("maNv");
                     String quyen = rs.getString("quyenTruyCap");
+                    
+                    
+                    // ✅ LẤY THÔNG TIN NHÂN VIÊN VÀ LƯU VÀO SESSION
+                    dao.NhanVienDAO nhanVienDAO = new dao.NhanVienDAO();
+                    entity.NhanVien nhanVien = nhanVienDAO.getNhanVienTheoMa(maNV);
+                    
+                    if (nhanVien != null) {
+                        // Lưu vào Session
+                        util.Session.setNhanVienDangNhap(nhanVien);
+                        
+                        System.out.println("✅ Đăng nhập thành công: " + nhanVien.getHoTen());
+                    } else {
+                        JOptionPane.showMessageDialog(this, 
+                            "Không tìm thấy thông tin nhân viên!", 
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        rs.close();
+                        stmt.close();
+                        return;
+                    }
+                    
+                    
+                                   
                     // Đóng cửa sổ đăng nhập
                     this.dispose();
                     
@@ -204,8 +240,6 @@ public class DangNhap extends JFrame implements ActionListener{
                 rs.close();
                 stmt.close();
 			} 
-			
-			
 			
 			
 			catch (Exception ex) {

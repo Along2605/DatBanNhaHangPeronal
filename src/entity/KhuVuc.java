@@ -1,8 +1,4 @@
-/*
- * @ (#) KhuVuc.java   1.0   9/18/2025
- *
- * Copyright (c) 2025 IUH. All rights reserved.
- */
+
 package entity;
 
 public class KhuVuc {
@@ -15,7 +11,9 @@ public class KhuVuc {
     public KhuVuc(String maKhuVuc) {
         this.maKhuVuc = maKhuVuc;
     }
-    public KhuVuc(String maKhuVuc, String tenKhuVuc, String viTri) {
+    
+    
+	public KhuVuc(String maKhuVuc, String tenKhuVuc, String viTri) {
         this.maKhuVuc = maKhuVuc;
         this.tenKhuVuc = tenKhuVuc;
         this.viTri = viTri;
@@ -37,6 +35,11 @@ public class KhuVuc {
     }
     public void setViTri(String viTri) {
         this.viTri = viTri;
+    }
+    
+    @Override
+    public String toString() {
+        return tenKhuVuc;
     }
 
 

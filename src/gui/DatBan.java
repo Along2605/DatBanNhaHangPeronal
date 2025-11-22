@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.time.LocalDateTime;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -16,6 +17,9 @@ import dao.BanAnDAO;
 import dao.KhachHangDAO;
 import dao.PhieuDatBanDAO;
 import entity.BanAn;
+import entity.KhachHang;
+import entity.NhanVien;
+import entity.PhieuDatBan;
 
 import java.util.Date;
 import java.util.List;
@@ -54,6 +58,10 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     private final Color MAU_CAM_SANG = new Color(234, 136, 96); // HOVER_COLOR
     private final Color BACKGROUND_COLOR = new Color(245, 245, 245);
     private final Color SUCCESS_COLOR = new Color(76, 175, 80);
+
+	private JButton btnDatMon;
+
+//	private String maNhanVienDangDangNhap;
     
     public DatBan() {
         setLayout(new BorderLayout(10, 10));
@@ -64,6 +72,9 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         add(createMainPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);     
         
+        phieuDatDAO= new PhieuDatBanDAO();
+        banAnDAO= new BanAnDAO();
+        khachHangDAO= new KhachHangDAO();
         loadDanhSachBanTrong();
         
         taoMaPhieuDatTuDong();
@@ -73,7 +84,18 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     
 
 	private void taoMaPhieuDatTuDong() {
-		// TODO Auto-generated method stub
+		try {
+	        String maPhieuDat = phieuDatDAO.taoMaPhieuDatTuDong();
+	        txtMaPhieuDat.setText(maPhieuDat);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        // Nếu lỗi, tạo mã random
+	        String prefix = "PD";
+	        String dateStr = new java.text.SimpleDateFormat("yyMMdd").format(new Date());
+	        String stt = String.format("%03d", (int)(Math.random() * 1000));
+	        txtMaPhieuDat.setText(prefix + dateStr + stt);
+	    }
+		
 		
 	}
 
@@ -147,6 +169,8 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         sdtPanel.setBackground(Color.WHITE);
         sdtPanel.add(txtSDTKhachHang, BorderLayout.CENTER);
         sdtPanel.add(btnTimKhachHang, BorderLayout.EAST);
+        
+        btnTimKhachHang.addActionListener(this);
         addFormField(formPanel, gbc, row++, "SĐT khách hàng: *", sdtPanel);
         
         // Tên khách hàng (hiển thị sau khi tìm)
@@ -355,8 +379,18 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         btnLamMoi = createButton("Làm mới", new Color(100, 100, 100));
         btnLamMoi.setPreferredSize(new Dimension(150, 40));
         
+        
+        btnDatMon = createButton("Đặt món", MAU_CAM);
+        btnDatMon.setPreferredSize(new Dimension(150, 40));
+        btnDatMon.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        
         panel.add(btnDatBan);
         panel.add(btnLamMoi);
+        panel.add(btnDatMon);
+        
+        btnDatBan.addActionListener(this);
+        btnLamMoi.addActionListener(this);
+        btnDatMon.addActionListener(this);
         
         return panel;
     }
@@ -376,7 +410,7 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         				ban.getMaBan(),
         				ban.getTenBan(),
         				ban.getSoLuongCho(),
-        				ban.getLoaiBan(),
+        				ban.getLoaiBan().getTenLoaiBan(),
         				ban.getKhuVuc() !=null ? ban.getKhuVuc().getTenKhuVuc(): "",
         				ban.getGhiChu()
         				
@@ -457,9 +491,7 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         
         return button;
     }
-    
-    
-    
+      
     
     // tạo nút nhỏ
     private JButton createSmallButton(String text, String iconPath) {
@@ -497,99 +529,364 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 		// TODO Auto-generated method stub
 		Object o= e.getSource();
 		if(o== btnDatBan) {
-//			datBan();
+			datBan();
+		}
+		else if(o== btnTimKhachHang) {
+			timKhachHang();
+		}
+		else if(o== btnLamMoi) {
+			lamMoiForm();
+		}
+		else if(o== btnDatMon) {
+//			DialogChonMonAn dialog = new DialogChonMonAn((Frame) SwingUtilities.getWindowAncestor(btnDatMon));
+//	        dialog.setVisible(true); // Mở dialog
 		}
 		
 	}
 
-//	private void datBan() {
-//		// TODO Auto-generated method stub
-//		
-//	    
-//	    // Kiểm tra đã chọn bàn chưa
-//	    int selectedRow = tableBanTrong.getSelectedRow();
-//	    if (selectedRow == -1) {
-//	        JOptionPane.showMessageDialog(this,
-//	            "Vui lòng chọn một bàn để đặt!",
-//	            "Thông báo", JOptionPane.WARNING_MESSAGE);
-//	        return;
-//	    }
-//	    
-//	    // Lấy thông tin
-//	    String maBan = tableModel.getValueAt(selectedRow, 0).toString();
-//	    String tenBan = tableModel.getValueAt(selectedRow, 1).toString();
-//	    
-//	    Date ngayDat = dateChooserNgayDat.getDate();
-//	    Date gioDat = (Date) spinnerGioDat.getValue();
-//	    
-//	    // Kết hợp ngày và giờ
-//	    java.util.Calendar calNgay = java.util.Calendar.getInstance();
-//	    calNgay.setTime(ngayDat);
-//	    
-//	    java.util.Calendar calGio = java.util.Calendar.getInstance();
-//	    calGio.setTime(gioDat);
-//	    
-//	    calNgay.set(java.util.Calendar.HOUR_OF_DAY, calGio.get(java.util.Calendar.HOUR_OF_DAY));
-//	    calNgay.set(java.util.Calendar.MINUTE, calGio.get(java.util.Calendar.MINUTE));
-//	    
-//	    java.sql.Timestamp ngayGioDat = new java.sql.Timestamp(calNgay.getTimeInMillis());
-//	    
-//	    int soNguoi = Integer.parseInt(txtSoNguoi.getText().trim());
-//	    double soTienCoc = Double.parseDouble(txtSoTienCoc.getText().trim());
-//	    String ghiChu = txtGhiChu.getText().trim();
-//	    
-//	    // Confirm
-//	    int confirm = JOptionPane.showConfirmDialog(this,
-//	        "Xác nhận đặt bàn?\n\n" +
-//	        "Bàn: " + tenBan + "\n" +
-//	        "Khách hàng: " + txtTenKhachHang.getText() + "\n" +
-//	        "Ngày giờ: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ngayGioDat) + "\n" +
-//	        "Số người: " + soNguoi + "\n" +
-//	        "Tiền cọc: " + String.format("%,d", (int)soTienCoc) + "đ",
-//	        "Xác nhận", JOptionPane.YES_NO_OPTION);
-//	    
-//	    if (confirm != JOptionPane.YES_OPTION) {
-//	        return;
-//	    }
-//	    
-//	    try {
-//	        // Tạo phiếu đặt bàn
-//	        entity.PhieuDatBan phieuDat = new entity.PhieuDatBan();
-//	        phieuDat.setMaPhieuDat(txtMaPhieuDat.getText());
-//	        phieuDat.setMaKH(maKhachHang);
-//	        phieuDat.setMaBan(maBan);
-//	        phieuDat.setNgayDat(ngayGioDat);
-//	        phieuDat.setSoNguoi(soNguoi);
-//	        phieuDat.setSoTienCoc(soTienCoc);
-//	        phieuDat.setGhiChu(ghiChu);
-//	        phieuDat.setTrangThai("Đã đặt");
-//	        
-//	        // Lưu vào database
-//	        boolean success = phieuDatDAO.themPhieuDatBan(phieuDat);
-//	        
-//	        if (success) {
-//	            JOptionPane.showMessageDialog(this,
-//	                "Đặt bàn thành công!\n\n" +
-//	                "Mã phiếu đặt: " + txtMaPhieuDat.getText() + "\n" +
-//	                "Bàn: " + tenBan + "\n\n" +
-//	                "Vui lòng đến đúng giờ!",
-//	                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-//	            
-//	            // Làm mới form
-//	            lamMoiForm();
-//	        } else {
-//	            JOptionPane.showMessageDialog(this,
-//	                "Đặt bàn thất bại!",
-//	                "Lỗi", JOptionPane.ERROR_MESSAGE);
-//	        }
-//	        
-//	    } catch (Exception e) {
-//	        e.printStackTrace();
-//	        JOptionPane.showMessageDialog(this,
-//	            "Lỗi khi đặt bàn!\n" + e.getMessage(),
-//	            "Lỗi", JOptionPane.ERROR_MESSAGE);
-//	    }
-//	}
+	private void timKhachHang() {
+		// TODO Auto-generated method stub
+		String sdt = txtSDTKhachHang.getText().trim();
+	    
+	    // Validate
+	    if (sdt.isEmpty()) {
+	        JOptionPane.showMessageDialog(this,
+	            "Vui lòng nhập số điện thoại!",
+	            "Thông báo", JOptionPane.WARNING_MESSAGE);
+	        txtSDTKhachHang.requestFocus();
+	        return;
+	    }
+	    
+	    // Kiểm tra format SĐT
+	    if (!sdt.matches("^0\\d{9,10}$")) {
+	        JOptionPane.showMessageDialog(this,
+	            "Số điện thoại không hợp lệ!\n" +
+	            "Vui lòng nhập số điện thoại 10-11 số, bắt đầu bằng 0",
+	            "Lỗi", JOptionPane.ERROR_MESSAGE);
+	        txtSDTKhachHang.requestFocus();
+	        return;
+	    }
+	    try {
+	        // Tìm khách hàng từ database
+	        entity.KhachHang kh = khachHangDAO.timKhachHangTheoSDT(sdt);
+	        
+	        if (kh != null) {
+	            // Tìm thấy khách hàng
+	            maKhachHang = kh.getMaKH();
+	            txtTenKhachHang.setText(kh.getHoTen());
+	            
+	            JOptionPane.showMessageDialog(this,
+	                "Tìm thấy khách hàng!\n\n" +
+	                "Họ tên: " + kh.getHoTen() + "\n" +
+	                "Điểm tích lũy: " + kh.getDiemTichLuy(),
+	                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+	        } else {
+	            // Không tìm thấy
+	            maKhachHang = null;
+	            txtTenKhachHang.setText("");
+	            
+	            int choice = JOptionPane.showConfirmDialog(this,
+	                "Không tìm thấy khách hàng với SĐT: " + sdt + "\n\n" +
+	                "Bạn có muốn thêm khách hàng mới không?",
+	                "Thông báo", JOptionPane.YES_NO_OPTION);
+	            
+	            if (choice == JOptionPane.YES_OPTION) {
+	                // Mở form thêm khách hàng
+	                moFormThemKhachHang(sdt);
+	            }
+	        }
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        JOptionPane.showMessageDialog(this,
+	            "Lỗi khi tìm khách hàng!\n" + e.getMessage(),
+	            "Lỗi", JOptionPane.ERROR_MESSAGE);
+	    }
+		
+	}
+
+
+
+	private void moFormThemKhachHang(String sdt) {
+		// TODO Auto-generated method stub
+		// Tạo dialog đơn giản để thêm khách hàng
+	    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), 
+	                                 "Thêm khách hàng mới", true);
+	    dialog.setSize(400, 300);
+	    dialog.setLocationRelativeTo(this);
+	    dialog.setLayout(new BorderLayout(10, 10));
+	    
+	    JPanel mainPanel = new JPanel(new GridBagLayout());
+	    mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+	    mainPanel.setBackground(Color.WHITE);
+	    
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.fill = GridBagConstraints.HORIZONTAL;
+	    gbc.insets = new Insets(8, 5, 8, 5);
+	    
+	    // Họ tên
+	    gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.3;
+	    mainPanel.add(new JLabel("Họ tên: *"), gbc);
+	    
+	    gbc.gridx = 1; gbc.weightx = 0.7;
+	    JTextField txtHoTen = createTextField();
+	    mainPanel.add(txtHoTen, gbc);
+	    
+	    // SĐT (đã có sẵn)
+	    gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.3;
+	    mainPanel.add(new JLabel("SĐT:"), gbc);
+	    
+	    gbc.gridx = 1; gbc.weightx = 0.7;
+	    JTextField txtSDT = createTextField();
+	    txtSDT.setText(sdt);
+	    txtSDT.setEditable(false);
+	    txtSDT.setBackground(new Color(240, 240, 240));
+	    mainPanel.add(txtSDT, gbc);
+	    
+	    // Giới tính
+	    gbc.gridx = 0; gbc.gridy = 2;
+	    mainPanel.add(new JLabel("Giới tính:"), gbc);
+	    
+	    gbc.gridx = 1;
+	    JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
+	    mainPanel.add(cboGioiTinh, gbc);
+	    
+	    dialog.add(mainPanel, BorderLayout.CENTER);
+	    
+	    // Panel nút
+	    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+	    buttonPanel.setBackground(Color.WHITE);
+	    
+	    JButton btnLuu = createButton("Lưu", SUCCESS_COLOR);
+	    btnLuu.setPreferredSize(new Dimension(100, 35));
+	    btnLuu.addActionListener(e -> {
+	        String hoTen = txtHoTen.getText().trim();
+	        
+	        if (hoTen.isEmpty()) {
+	            JOptionPane.showMessageDialog(dialog,
+	                "Vui lòng nhập họ tên!",
+	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            return;
+	        }
+	        
+	        try {
+	            // Thêm khách hàng mới
+	            String maKH = khachHangDAO.taoMaKhachHangTuDong();
+	            boolean gioiTinh = cboGioiTinh.getSelectedIndex() == 0; // true = Nam
+	            
+	            entity.KhachHang khMoi = new entity.KhachHang();
+	            khMoi.setMaKH(maKH);
+	            khMoi.setHoTen(hoTen);
+	            khMoi.setSdt(sdt);
+	            khMoi.setGioiTinh(gioiTinh);
+	            khMoi.setDiemTichLuy(0);
+	            
+	            boolean success = khachHangDAO.themKhachHang(khMoi);
+	            
+	            if (success) {
+	                maKhachHang = maKH;
+	                txtTenKhachHang.setText(hoTen);
+	                
+	                JOptionPane.showMessageDialog(dialog,
+	                    "Thêm khách hàng thành công!",
+	                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+	                
+	                dialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(dialog,
+	                    "Thêm khách hàng thất bại!",
+	                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	            
+	        } catch (Exception ex) {
+	            ex.printStackTrace();
+	            JOptionPane.showMessageDialog(dialog,
+	                "Lỗi khi thêm khách hàng!\n" + ex.getMessage(),
+	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+	        }
+	    });
+	    
+	    JButton btnHuy = createButton("Hủy", new Color(100, 100, 100));
+	    btnHuy.setPreferredSize(new Dimension(100, 35));
+	    btnHuy.addActionListener(e -> dialog.dispose());
+	    
+	    buttonPanel.add(btnLuu);
+	    buttonPanel.add(btnHuy);
+	    
+	    dialog.add(buttonPanel, BorderLayout.SOUTH);
+	    dialog.setVisible(true);
+		
+		
+	}
+
+
+	private void datBan() {
+	    // Kiểm tra đã chọn bàn chưa
+	    int selectedRow = tableBanTrong.getSelectedRow();
+	    if (selectedRow == -1) {
+	        JOptionPane.showMessageDialog(this,
+	            "Vui lòng chọn một bàn để đặt!",
+	            "Thông báo", JOptionPane.WARNING_MESSAGE);
+	        return;
+	    }
+
+	    try {
+	        // Lấy thông tin bàn
+	        String maBan = tableModel.getValueAt(selectedRow, 0).toString();
+	        String tenBan = tableModel.getValueAt(selectedRow, 1).toString();
+	        
+	        int soCho = Integer.parseInt(tableModel.getValueAt(selectedRow, 2).toString());
+	        
+	        int soNguoi = Integer.parseInt(txtSoNguoi.getText().trim());
+	        
+//	        System.out.println("soCho = " + soCho);
+//	        System.out.println("soNguoi = " + soNguoi);
+	        
+	     // RÀNG BUỘC: số người không vượt quá số chỗ
+	        if (soNguoi > soCho) {
+	            JOptionPane.showMessageDialog(this,
+	                "Số người (" + soNguoi + ") không được vượt quá số chỗ của bàn (" + soCho + ")!",
+	                "Thông báo", JOptionPane.WARNING_MESSAGE);
+	            return;
+	        }
+
+	        // Lấy ngày và giờ
+	        Date ngayDat = dateChooserNgayDat.getDate();
+	        Date gioDat = (Date) spinnerGioDat.getValue();
+	        
+	        if (ngayDat == null) {
+	            JOptionPane.showMessageDialog(this, 
+	                "Vui lòng chọn ngày đặt bàn trước khi xác nhận!",
+	                "Thiếu thông tin", 
+	                JOptionPane.WARNING_MESSAGE);
+	            return;
+	        }
+
+	        java.util.Calendar calNgay = java.util.Calendar.getInstance();
+	        calNgay.setTime(ngayDat);
+	        if (ngayDat == null) ngayDat = new Date();
+	        java.util.Calendar calGio = java.util.Calendar.getInstance();
+	        calGio.setTime(gioDat);
+
+	        calNgay.set(java.util.Calendar.HOUR_OF_DAY, calGio.get(java.util.Calendar.HOUR_OF_DAY));
+	        calNgay.set(java.util.Calendar.MINUTE, calGio.get(java.util.Calendar.MINUTE));
+
+	        LocalDateTime ngayGioDat = new java.sql.Timestamp(calNgay.getTimeInMillis()).toLocalDateTime();
+
+	        
+	        String soTienText = txtSoTienCoc.getText().trim();
+
+	     // Loại bỏ mọi ký tự không phải số hoặc dấu chấm
+	        soTienText = soTienText.replaceAll("[^0-9.]", "");
+
+	     // Kiểm tra chuỗi trống và chuyển đổi an toàn
+		     double soTienCoc = 0;
+		     if (!soTienText.isEmpty()) {
+		         try {
+		             soTienCoc = Double.parseDouble(soTienText);
+		         } catch (NumberFormatException e) {
+		             System.err.println("Giá trị tiền cọc không hợp lệ: " + soTienText);
+		         }
+		     }
+
+	        String ghiChu = txtGhiChu.getText().trim();
+
+	        // Xác nhận
+	        int confirm = JOptionPane.showConfirmDialog(this,
+	            "Xác nhận đặt bàn?\n\n" +
+	            "Bàn: " + tenBan + "\n" +
+	            "Khách hàng: " + txtTenKhachHang.getText() + "\n" +
+	            "Ngày giờ: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(calNgay.getTime()) + "\n" +
+	            "Số người: " + soNguoi + "\n" +
+	            "Tiền cọc: " + String.format("%,.0f", soTienCoc) + "đ",
+	            "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+	        if (confirm != JOptionPane.YES_OPTION) {
+	            return;
+	        }
+	        
+	     // ✅ LẤY NHÂN VIÊN TỪ SESSION
+	        NhanVien nhanVienDangNhap = util.Session.getNhanVienDangNhap();
+	        
+	        if (nhanVienDangNhap == null) {
+	            JOptionPane.showMessageDialog(this,
+	                "Lỗi: Không tìm thấy thông tin nhân viên đăng nhập!\n" +
+	                "Vui lòng đăng nhập lại.",
+	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            return;
+	        }
+
+	        // Khởi tạo các đối tượng liên quan
+	        KhachHang kh = new KhachHang(maKhachHang);
+//	        NhanVien nv = util.Session.nhanVienDangNhap;
+	        BanAn ban = new BanAn(maBan);
+
+	        // Tạo phiếu đặt bàn
+	        PhieuDatBan phieuDat = new PhieuDatBan();
+	        phieuDat.setMaPhieuDat(txtMaPhieuDat.getText());
+	        phieuDat.setKhachHang(kh);
+	        
+	        phieuDat.setNhanVien(nhanVienDangNhap); // ✅ SỬ DỤNG NHÂN VIÊN TỪ SESSION
+	        phieuDat.setBanAn(ban);
+	        phieuDat.setNgayDat(ngayGioDat);
+	        phieuDat.setSoNguoi(soNguoi);
+	        phieuDat.setSoTienCoc(soTienCoc);
+	        phieuDat.setGhiChu(ghiChu);
+	        phieuDat.setTrangThai("Đã đặt");
+
+	        // Lưu vào database
+	        boolean success = phieuDatDAO.taoPhieuDat(phieuDat);
+
+	        if (success) {
+	        	boolean capNhatBan= banAnDAO.capNhatTrangThaiBan(maBan, "Đã đặt");
+	        	if(!capNhatBan) {
+	        		System.err.println("Không thể cập nhật trạng thái bàn");
+	        	}
+	            JOptionPane.showMessageDialog(this,
+	                "Đặt bàn thành công!\n\n" +
+	                "Mã phiếu đặt: " + txtMaPhieuDat.getText() + "\n" +
+	                "Bàn: " + tenBan + "\n\n" +
+	                "Vui lòng đến đúng giờ!",
+	                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+	            loadDanhSachBanTrong();
+	            lamMoiForm();
+	        } else {
+	            JOptionPane.showMessageDialog(this,
+	                "Đặt bàn thất bại!",
+	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        JOptionPane.showMessageDialog(this,
+	            "Lỗi khi đặt bàn!\n" + e.getMessage(),
+	            "Lỗi", JOptionPane.ERROR_MESSAGE);
+	    }
+	}
+
+
+
+
+	private void lamMoiForm() {
+		// TODO Auto-generated method stub
+		taoMaPhieuDatTuDong();
+		txtSDTKhachHang.setText("");
+		txtTenKhachHang.setText("");
+		txtSoNguoi.setText("");
+		txtSoTienCoc.setText("0");
+		txtGhiChu.setText("");
+		
+		dateChooserNgayDat.setDate(null);
+		spinnerGioDat.setValue(new Date());
+		
+		cboKhuVuc.setSelectedIndex(0);
+	    cboLoaiBan.setSelectedIndex(0);
+	    
+	    tableBanTrong.clearSelection();
+	    maKhachHang = null;
+	    
+	    txtSDTKhachHang.requestFocus();
+	}
 
 
 

@@ -43,7 +43,7 @@ public class DialogChiTietBanAn extends JDialog {
         addInfoRow(infoPanel, gbc, 0, "Mã bàn:", banAn.getMaBan());
         addInfoRow(infoPanel, gbc, 1, "Tên bàn:", banAn.getTenBan());
         addInfoRow(infoPanel, gbc, 2, "Số lượng chỗ:", String.valueOf(banAn.getSoLuongCho()));
-        addInfoRow(infoPanel, gbc, 3, "Loại bàn:", banAn.getLoaiBan() != null ? banAn.getLoaiBan() : "Chưa xác định");
+        addInfoRow(infoPanel, gbc, 3, "Loại bàn:", banAn.getLoaiBan().getTenLoaiBan() != null ? banAn.getLoaiBan().getTenLoaiBan() : "Chưa xác định");
         addInfoRow(infoPanel, gbc, 4, "Khu vực:",
                 banAn.getKhuVuc() != null && banAn.getKhuVuc().getTenKhuVuc() != null
                         ? banAn.getKhuVuc().getTenKhuVuc()

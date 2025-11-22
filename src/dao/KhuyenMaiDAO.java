@@ -1,112 +1,88 @@
 package dao;
 
-import connectDB.ConnectDB;
-import entity.KhuyenMai;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import connectDB.ConnectDB;
+import entity.KhuyenMai;
+
 public class KhuyenMaiDAO {
-    // Thêm khuyến mãi mới
-    public boolean taoKhuyenMai(KhuyenMai km) {
-        String sql = "INSERT INTO KhuyenMai (maKhuyenMai, tenKhuyenMai, phanTramGiam, ngayBatDau, ngayKetThuc, loaiKhuyenMai, trangThai) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, km.getMaKhuyenMai());
-            stmt.setString(2, km.getTenKhuyenMai());
-            stmt.setDouble(3, km.getPhanTramGiam());
-            stmt.setObject(4, km.getNgayBatDau());
-            stmt.setObject(5, km.getNgayKetThuc());
-            stmt.setString(6, km.getLoaiKhuyenMai());
-            stmt.setBoolean(7, km.isTrangThai());
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
-    // Cập nhật khuyến mãi
-    public boolean capNhatKhuyenMai(KhuyenMai km) {
-        String sql = "UPDATE KhuyenMai SET tenKhuyenMai = ?, phanTramGiam = ?, ngayBatDau = ?, ngayKetThuc = ?, loaiKhuyenMai = ?, trangThai = ? WHERE maKhuyenMai = ?";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, km.getTenKhuyenMai());
-            stmt.setDouble(2, km.getPhanTramGiam());
-            stmt.setObject(3, km.getNgayBatDau());
-            stmt.setObject(4, km.getNgayKetThuc());
-            stmt.setString(5, km.getLoaiKhuyenMai());
-            stmt.setBoolean(6, km.isTrangThai());
-            stmt.setString(7, km.getMaKhuyenMai());
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+    public List<KhuyenMai> getKhuyenMaiHopLe() {
+        List<KhuyenMai> dsKhuyenMai = new ArrayList<>();
+        String sql = """
+            SELECT * FROM KhuyenMai
+            WHERE trangThai = 1 
+              AND (ngayBatDau IS NULL OR ngayBatDau <= ?)
+              AND (ngayKetThuc IS NULL OR ngayKetThuc >= ?)
+        """;
 
-    // Xóa khuyến mãi
-    public boolean xoaKhuyenMai(String maKhuyenMai) {
-        String sql = "DELETE FROM KhuyenMai WHERE maKhuyenMai = ?";
         try (Connection con = ConnectDB.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maKhuyenMai);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
-    // Lấy khuyến mãi theo mã
-    public KhuyenMai getKhuyenMaiTheoMa(String maKhuyenMai) {
-        String sql = "SELECT * FROM KhuyenMai WHERE maKhuyenMai = ?";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, maKhuyenMai);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return new KhuyenMai(
-                    rs.getString("maKhuyenMai"),
-                    rs.getString("tenKhuyenMai"),
-                    rs.getDouble("phanTramGiam"),
-                    rs.getObject("ngayBatDau", LocalDateTime.class),
-                    rs.getObject("ngayKetThuc", LocalDateTime.class),
-                    rs.getString("loaiKhuyenMai"),
-                    rs.getBoolean("trangThai")
-                );
+            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            stmt.setTimestamp(1, now);
+            stmt.setTimestamp(2, now);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    dsKhuyenMai.add(parseKhuyenMai(rs));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            System.err.println("❌ Lỗi khi tải danh sách khuyến mãi hợp lệ: " + e.getMessage());
         }
+
+        return dsKhuyenMai;
+    }
+
+    /**
+     * Trả về khuyến mãi theo mã
+     */
+    public KhuyenMai getKhuyenMaiTheoMa(String maKhuyenMai) {
+        String sql = "SELECT * FROM KhuyenMai WHERE maKhuyenMai = ?";
+
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, maKhuyenMai);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return parseKhuyenMai(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("❌ Lỗi khi tìm khuyến mãi theo mã: " + e.getMessage());
+        }
+
         return null;
     }
 
-    // Lấy tất cả khuyến mãi
-    public List<KhuyenMai> getAllKhuyenMai() {
-        List<KhuyenMai> dsKhuyenMai = new ArrayList<>();
-        String sql = "SELECT * FROM KhuyenMai";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                dsKhuyenMai.add(new KhuyenMai(
-                    rs.getString("maKhuyenMai"),
-                    rs.getString("tenKhuyenMai"),
-                    rs.getDouble("phanTramGiam"),
-                    rs.getObject("ngayBatDau", LocalDateTime.class),
-                    rs.getObject("ngayKetThuc", LocalDateTime.class),
-                    rs.getString("loaiKhuyenMai"),
-                    rs.getBoolean("trangThai")
-                ));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return dsKhuyenMai;
+    private KhuyenMai parseKhuyenMai(ResultSet rs) throws SQLException {
+        KhuyenMai km = new KhuyenMai();
+
+        km.setMaKhuyenMai(rs.getString("maKhuyenMai"));
+        km.setTenKhuyenMai(rs.getString("tenKhuyenMai"));
+        km.setPhanTramGiam(rs.getDouble("phanTramGiam"));
+        km.setSoTienGiam(rs.getDouble("soTienGiam"));
+        
+        Timestamp batDau = rs.getTimestamp("ngayBatDau");
+        Timestamp ketThuc = rs.getTimestamp("ngayKetThuc");
+        if (batDau != null) km.setNgayBatDau(batDau.toLocalDateTime());
+        if (ketThuc != null) km.setNgayKetThuc(ketThuc.toLocalDateTime());
+        
+        km.setLoaiKhuyenMai(rs.getString("loaiKhuyenMai"));
+        km.setTrangThai(rs.getBoolean("trangThai")); // BIT → boolean
+
+        return km;
     }
 }
