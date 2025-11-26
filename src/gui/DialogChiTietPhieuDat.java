@@ -624,7 +624,7 @@ public class DialogChiTietPhieuDat extends JDialog{
 
 
             // --- 3. Lưu hóa đơn ---
-            if (!hoaDonDAO.themHoaDon(hoaDonMoi)) {
+            if (!hoaDonDAO.themHoaDon(hoaDonMoi, Session.getMaNhanVienDangNhap())) {
                 throw new Exception("Không thể tạo hóa đơn mới!");
             }
 

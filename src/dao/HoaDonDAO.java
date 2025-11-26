@@ -9,6 +9,7 @@ import java.util.List;
 
 import connectDB.ConnectDB;
 import entity.*;
+import entity.NhatKyThaoTac.LoaiThaoTac;
 
 public class HoaDonDAO {
     private BanAnDAO banAnDAO = new BanAnDAO();
@@ -16,12 +17,14 @@ public class HoaDonDAO {
     private NhanVienDAO nhanVienDAO = new NhanVienDAO();
     private KhuyenMaiDAO khuyenMaiDAO = new KhuyenMaiDAO();
     private PhieuDatBanDAO phieuDatBanDAO = new PhieuDatBanDAO();
+    private NhatKyThaoTacDAO logDAO = NhatKyThaoTacDAO.getInstance();
     
 
     
-    public boolean themHoaDon(HoaDon hd) {
-        String sql = "INSERT INTO HoaDon (maHoaDon, maBan, maKH, maNV, maPhieuDat, ngayLapHoaDon, thueVAT, tongTien, maKhuyenMai, trangThai, tienCoc) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean themHoaDon(HoaDon hd, String maNVThaoTac) {
+        String sql = "INSERT INTO HoaDon (maHoaDon, maBan, maKH, maNV, maPhieuDat, " +
+                     "ngayLapHoaDon, thueVAT, tongTien, maKhuyenMai, trangThai, tienCoc) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = ConnectDB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -30,40 +33,61 @@ public class HoaDonDAO {
             ps.setString(3, hd.getKhachHang() != null ? hd.getKhachHang().getMaKH() : null);
             ps.setString(4, hd.getNhanVien() != null ? hd.getNhanVien().getMaNV() : null);
             ps.setString(5, hd.getPhieuDat() != null ? hd.getPhieuDat().getMaPhieuDat() : null);
-            ps.setTimestamp(6, hd.getNgayLapHoaDon() != null ? Timestamp.valueOf(hd.getNgayLapHoaDon()) : null);
+            ps.setTimestamp(6, hd.getNgayLapHoaDon() != null ? 
+                Timestamp.valueOf(hd.getNgayLapHoaDon()) : null);
             ps.setDouble(7, hd.getThueVAT());
             ps.setDouble(8, hd.getTongTien());
             ps.setString(9, hd.getKhuyenMai() != null ? hd.getKhuyenMai().getMaKhuyenMai() : null);
             ps.setString(10, hd.getTrangThai());
             ps.setDouble(11, hd.getTienCoc());
 
-            return ps.executeUpdate() > 0;
+            boolean result = ps.executeUpdate() > 0;
+            
+            // GHI LOG nếu thành công
+            if (result && maNVThaoTac != null) {
+                logDAO.logThem(maNVThaoTac, hd, "Thêm hóa đơn mới");
+            }
+            
+            return result;
 
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+    
 
     
-    public boolean capNhatHoaDon(HoaDon hd) {
-        String sql = "UPDATE HoaDon SET maBan = ?, maKH = ?, maNV = ?, ngayLapHoaDon = ?, thueVAT = ?, tongTien = ?, maKhuyenMai = ?, trangThai = ?, tienCoc = ? "
-                   + "WHERE maHoaDon = ?";
+    public boolean capNhatHoaDon(HoaDon hdMoi, String maNVThaoTac) {
+        // Lấy dữ liệu cũ trước khi cập nhật
+        HoaDon hdCu = timHoaDonTheoMa(hdMoi.getMaHoaDon());
+        
+        String sql = "UPDATE HoaDon SET maBan = ?, maKH = ?, maNV = ?, " +
+                     "ngayLapHoaDon = ?, thueVAT = ?, tongTien = ?, " +
+                     "maKhuyenMai = ?, trangThai = ?, tienCoc = ? WHERE maHoaDon = ?";
         try (Connection con = ConnectDB.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
-            stmt.setString(1, hd.getBanAn() != null ? hd.getBanAn().getMaBan() : null);
-            stmt.setString(2, hd.getKhachHang() != null ? hd.getKhachHang().getMaKH() : null);
-            stmt.setString(3, hd.getNhanVien() != null ? hd.getNhanVien().getMaNV() : null);
-            stmt.setTimestamp(4, hd.getNgayLapHoaDon() != null ? Timestamp.valueOf(hd.getNgayLapHoaDon()) : null);
-            stmt.setDouble(5, hd.getThueVAT());
-            stmt.setDouble(6, hd.getTongTien());
-            stmt.setString(7, hd.getKhuyenMai() != null ? hd.getKhuyenMai().getMaKhuyenMai() : null);
-            stmt.setString(8, hd.getTrangThai());
-            stmt.setDouble(9, hd.getTienCoc());
-            stmt.setString(10, hd.getMaHoaDon());
+            stmt.setString(1, hdMoi.getBanAn() != null ? hdMoi.getBanAn().getMaBan() : null);
+            stmt.setString(2, hdMoi.getKhachHang() != null ? hdMoi.getKhachHang().getMaKH() : null);
+            stmt.setString(3, hdMoi.getNhanVien() != null ? hdMoi.getNhanVien().getMaNV() : null);
+            stmt.setTimestamp(4, hdMoi.getNgayLapHoaDon() != null ? 
+                Timestamp.valueOf(hdMoi.getNgayLapHoaDon()) : null);
+            stmt.setDouble(5, hdMoi.getThueVAT());
+            stmt.setDouble(6, hdMoi.getTongTien());
+            stmt.setString(7, hdMoi.getKhuyenMai() != null ? hdMoi.getKhuyenMai().getMaKhuyenMai() : null);
+            stmt.setString(8, hdMoi.getTrangThai());
+            stmt.setDouble(9, hdMoi.getTienCoc());
+            stmt.setString(10, hdMoi.getMaHoaDon());
 
-            return stmt.executeUpdate() > 0;
+            boolean result = stmt.executeUpdate() > 0;
+            
+            // GHI LOG nếu thành công
+            if (result && maNVThaoTac != null && hdCu != null) {
+                logDAO.logSua(maNVThaoTac, hdCu, hdMoi, "Cập nhật hóa đơn");
+            }
+            
+            return result;
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -71,13 +95,22 @@ public class HoaDonDAO {
         }
     }
 
-    // XÓA HÓA ĐƠN
-    public boolean xoaHoaDon(String maHoaDon) {
+    public boolean xoaHoaDon(String maHoaDon, String maNVThaoTac) {
+        // Lấy dữ liệu trước khi xóa để ghi log
+        HoaDon hd = timHoaDonTheoMa(maHoaDon);
+        
         String sql = "DELETE FROM HoaDon WHERE maHoaDon = ?";
         try (Connection con = ConnectDB.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, maHoaDon);
-            return stmt.executeUpdate() > 0;
+            boolean result = stmt.executeUpdate() > 0;
+            
+            // GHI LOG nếu thành công
+            if (result && maNVThaoTac != null && hd != null) {
+                logDAO.logXoa(maNVThaoTac, hd, "Xóa hóa đơn");
+            }
+            
+            return result;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -120,6 +153,9 @@ public class HoaDonDAO {
         }
         return dsHoaDon;
     }
+    
+    
+  
 
   
     public List<HoaDon> timHoaDonTheoTrangThai(String trangThai) {
@@ -243,15 +279,31 @@ public class HoaDonDAO {
         return dsHoaDon;
     }
 
-    // ========== CẬP NHẬT TRẠNG THÁI HÓA ĐƠN ==========
-    public boolean capNhatTrangThai(String maHoaDon, String trangThai) {
+    public boolean capNhatTrangThai(String maHoaDon, String trangThaiMoi, String maNVThaoTac) {
+        HoaDon hdCu = timHoaDonTheoMa(maHoaDon);
+        String trangThaiCu = hdCu != null ? hdCu.getTrangThai() : "";
+        
         String sql = "UPDATE HoaDon SET trangThai = ? WHERE maHoaDon = ?";
         try (Connection con = ConnectDB.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
             
-            stmt.setString(1, trangThai);
+            stmt.setString(1, trangThaiMoi);
             stmt.setString(2, maHoaDon);
-            return stmt.executeUpdate() > 0;
+            boolean result = stmt.executeUpdate() > 0;
+            
+            // GHI LOG
+            if (result && maNVThaoTac != null) {
+                logDAO.logDonGian(
+                    maNVThaoTac, 
+                    LoaiThaoTac.SUA, 
+                    "HoaDon", 
+                    maHoaDon,
+                    "Trạng thái: " + trangThaiCu + " -> " + trangThaiMoi,
+                    "Cập nhật trạng thái hóa đơn"
+                );
+            }
+            
+            return result;
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -526,6 +578,29 @@ public class HoaDonDAO {
         }
         return ds;
     }
+    
+    public static LocalDate layNgayCoNhieuHoaDonNhat() {
+        String sql = 
+            "SELECT top 1 CAST(ngayLapHoaDon AS DATE) AS ngay, COUNT(*) AS soLuong " +
+            "FROM HoaDon " +
+            "GROUP BY CAST(ngayLapHoaDon AS DATE) " +
+            "ORDER BY soLuong DESC, ngay DESC";   // Ngày mới nhất nếu bằng nhau
+
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getDate("ngay").toLocalDate();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null; // Không có dữ liệu
+    }
+
     
  
     

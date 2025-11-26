@@ -72,18 +72,32 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
         lblNgay.setBounds(10, 10, 100, 21);
         panelLocNgay.add(lblNgay);
 
-        // === TẠO DATEPICKER ===
-        DatePickerSettings settings = new DatePickerSettings();
-        settings.setFormatForDatesCommonEra("dd/MM/yyyy");
-        datePicker = new DatePicker(settings);
-        datePicker.setDateToToday();
+     // === TẠO DATEPICKER ===
+        DatePickerSettings st = new DatePickerSettings();
+        st.setFormatForDatesCommonEra("dd/MM/yyyy");
+
+        // Truyền settings vào DatePicker
+        datePicker = new DatePicker(st);
+
+        // Lấy ngày có nhiều hóa đơn nhất
+        LocalDate ngayNhieuHDNhat = HoaDonDAO.layNgayCoNhieuHoaDonNhat();
+
+        // Nếu có kết quả → đặt ngày mặc định
+        if (ngayNhieuHDNhat != null) {
+            datePicker.setDate(ngayNhieuHDNhat);
+        } else {
+            datePicker.setDateToToday(); // fallback nếu không có dữ liệu
+        }
+
         datePicker.setBounds(10, 40, 215, 25);
         panelLocNgay.add(datePicker);
-
+        
         JButton btnThongKe = new JButton("Thống kê");
         btnThongKe.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnThongKe.setBounds(150, 70, 100, 25);
         panelLocNgay.add(btnThongKe);
+        
+        btnThongKe.doClick();
 
         // === TẠO CÁC PANEL THỐNG KÊ ===
         lblDoanhThu_TongTien = createStatPanel(contentPane, 373, "Doanh thu", "Theo ngày", "Vnđ");
@@ -247,8 +261,8 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
     private void capNhatThongKe(List<HoaDon> ds, Map<String, double[]> map) {
         DecimalFormat df = new DecimalFormat("#,###");
         double tongTien = ds.stream().mapToDouble(HoaDon::getTongTien).sum();
-        int taiBan = (int) ds.stream().filter(hd -> hd.getBanAn() != null).count();
-        int mangDi = ds.size() - taiBan;
+        int mangDi = (int) ds.stream().filter(hd -> hd.getKhachHang() == null).count();
+        int taiBan = ds.size() - mangDi;
 
         lblDoanhThu_TongTien.setText(df.format(tongTien));
         lblHoaDonTaiBan_SoLuong.setText(String.valueOf(taiBan));
@@ -258,22 +272,38 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
     }
 
     // === CẬP NHẬT BIỂU ĐỒ ===
+ // === CẬP NHẬT BIỂU ĐỒ (ĐÃ SỬA THỨ TỰ) ===
     private void capNhatBieuDo(Map<String, double[]> map, LocalDate ngay) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        for (Map.Entry<String, double[]> e : map.entrySet()) {
-            dataset.addValue(e.getValue()[1] / 1_000_000, "Doanh thu", e.getKey());
+
+        // Đảm bảo thêm đúng thứ tự thời gian (không phụ thuộc HashMap)
+        String[] thuTuDung = {"8h-11h", "12h-15h", "16h-19h", "20h-22h"};
+        
+        for (String khung : thuTuDung) {
+            double[] v = map.getOrDefault(khung, new double[]{0, 0});
+            double doanhThuTrieu = v[1] / 1_000_000.0;
+            dataset.addValue(doanhThuTrieu, "Doanh thu", khung);
         }
 
         JFreeChart chart = ChartFactory.createBarChart(
                 "DOANH THU THEO KHUNG GIỜ - " + ngay.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                "Khung giờ", "Doanh thu (triệu VNĐ)",
-                dataset, PlotOrientation.VERTICAL, true, true, false
+                "Khung giờ", 
+                "Doanh thu (triệu VNĐ)",
+                dataset, 
+                PlotOrientation.VERTICAL, 
+                true, true, false
         );
-        chart.getCategoryPlot().getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
-        chart.getCategoryPlot().getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
+
+        // Tùy chỉnh font
+        chart.getCategoryPlot().getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+        chart.getCategoryPlot().getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        // Quan trọng: Giữ nguyên thứ tự category như mình thêm vào
+        chart.getCategoryPlot().getDomainAxis().setCategoryMargin(0.2);
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(620, 343));
+        
         panelBieuDo.removeAll();
         panelBieuDo.add(chartPanel, BorderLayout.CENTER);
         panelBieuDo.revalidate();

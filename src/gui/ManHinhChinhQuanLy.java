@@ -215,7 +215,7 @@ public class ManHinhChinhQuanLy extends JFrame {
             menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuMonAn())));
             menu.add(createMenuItem("Cập nhật", e -> showPanel(new ThemMonAn())));
             menu.add(createMenuItem("Đặt món", e -> showPanel(new ManHinhDatMon(null))));
-            menu.add(createMenuItem("Thống kê", null));
+            menu.add(createMenuItem("Thống kê", e -> showPanel(new ManHinhThongKeMonAn())));
             return menu;
         }
 

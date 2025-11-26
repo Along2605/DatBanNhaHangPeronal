@@ -1332,7 +1332,7 @@ private void thanhToan() {
 
                     // 2️⃣ CẬP NHẬT HÓA ĐƠN
                     hoaDonDAO.capNhatTongTien(hoaDon.getMaHoaDon(), tongCong);
-                    hoaDonDAO.capNhatTrangThai(hoaDon.getMaHoaDon(), "Đã thanh toán");
+                    hoaDonDAO.capNhatTrangThai(hoaDon.getMaHoaDon(), "Đã thanh toán", Session.getMaNhanVienDangNhap());
 
                     if(banAn != null) {
                     banAnDAO.capNhatTrangThaiBan(banAn.getMaBan(), "Trống");
@@ -1394,7 +1394,7 @@ private void thanhToan() {
             hd.setKhachHang(null); // khách vãng lai
             hd.setKhuyenMai(null);
 
-            boolean success = hdDAO.themHoaDon(hd);
+            boolean success = hdDAO.themHoaDon(hd, Session.getMaNhanVienDangNhap());
             if (success) {
                 // Cập nhật trạng thái bàn thành "Đang sử dụng"
                 banDAO.capNhatTrangThaiBan(ban.getMaBan(), "Đang sử dụng");
