@@ -206,7 +206,7 @@ public class ManHinhThongKeHoaDonTheoNam extends JPanel {
             if (v == null) {
                 v = new double[]{0, 0}; // Khởi tạo nếu null
             }
-            dataset.addValue(v[1] / 1_000_000, "Doanh thu", "Tháng " + i);
+            dataset.addValue(v[1] / 1_000_000, "Doanh thu", i +"");
         }
 
         JFreeChart chart = ChartFactory.createBarChart(
