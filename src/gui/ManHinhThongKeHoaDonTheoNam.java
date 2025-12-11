@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,23 +186,85 @@ public class ManHinhThongKeHoaDonTheoNam extends JPanel {
     private void xemChiTiet() {
         int row = table.getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một tháng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một tháng trong bảng!", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int thang = (Integer) model.getValueAt(row, 0);
 
-        List<HoaDon> ds = HoaDonDAO.layDanhSachHoaDonTheoThang(thang, namHienTai)
+        // Lấy tất cả hóa đơn đã thanh toán của tháng đó
+        List<HoaDon> dsHoaDonThang = HoaDonDAO.layDanhSachHoaDonTheoThang(thang, namHienTai)
                 .stream()
-                .filter(hd -> hd.getTrangThai().equalsIgnoreCase("Đã thanh toán"))
+                .filter(hd -> "Đã thanh toán".equalsIgnoreCase(hd.getTrangThai()))
                 .toList();
 
-        if (ds.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có hóa đơn trong tháng " + thang + "!", "Thông tin", JOptionPane.INFORMATION_MESSAGE);
+        if (dsHoaDonThang.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Không có hóa đơn nào trong tháng " + thang + "/" + namHienTai + "!", 
+                "Thông tin", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        // Có thể mở màn hình chi tiết theo ngày của tháng đó, hoặc mở theo tháng
-        JOptionPane.showMessageDialog(this, "Chức năng xem chi tiết theo ngày của tháng đang phát triển!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        // Hoặc mở: new ManHinhThongKeHoaDonTheoThang().setVisible(true); với tháng + năm đã chọn
+
+        // Tạo map: ngày -> danh sách hóa đơn trong ngày đó
+        Map<LocalDate, List<HoaDon>> mapTheoNgay = new HashMap<>();
+        for (HoaDon hd : dsHoaDonThang) {
+            LocalDate ngay = hd.getNgayLapHoaDon().toLocalDate();
+            mapTheoNgay.computeIfAbsent(ngay, k -> new ArrayList<>()).add(hd);
+        }
+
+        // Tạo dialog chọn ngày
+        JDialog dialogChonNgay = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), 
+            "Chọn ngày xem chi tiết - Tháng " + thang + "/" + namHienTai);
+        dialogChonNgay.setSize(400, 500);
+        dialogChonNgay.setLocationRelativeTo(this);
+        dialogChonNgay.setModal(true);
+        dialogChonNgay.setLayout(new BorderLayout());
+
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        JList<String> listNgay = new JList<>(listModel);
+        listNgay.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Đổ dữ liệu ngày có hóa đơn
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy ");
+        mapTheoNgay.keySet().stream()
+            .sorted()
+            .forEach(ngay -> {
+                int soHD = mapTheoNgay.get(ngay).size();
+                double tongTien = mapTheoNgay.get(ngay).stream().mapToDouble(HoaDon::getTongTien).sum();
+                String text = String.format("%s - %d hóa đơn - %, .0f VNĐ", 
+                    ngay.format(fmt), soHD, tongTien);
+                listModel.addElement(text);
+            });
+
+        JScrollPane scroll = new JScrollPane(listNgay);
+        scroll.setBorder(BorderFactory.createTitledBorder("Chọn ngày để xem chi tiết hóa đơn"));
+        dialogChonNgay.add(scroll, BorderLayout.CENTER);
+
+        JPanel panelBtn = new JPanel(new FlowLayout());
+        JButton btnXem = new JButton("Xem chi tiết");
+        JButton btnHuy = new JButton("Đóng");
+
+        btnXem.addActionListener(e -> {
+            int selected = listNgay.getSelectedIndex();
+            if (selected == -1) {
+                JOptionPane.showMessageDialog(dialogChonNgay, "Vui lòng chọn một ngày!");
+                return;
+            }
+            LocalDate ngayChon = mapTheoNgay.keySet().stream().sorted().toList().get(selected);
+            List<HoaDon> dsNgayChon = mapTheoNgay.get(ngayChon);
+
+            // DÙNG LẠI HOÀN TOÀN DIALOG CỦA THEO NGÀY
+            new DialogChiTietHoaDonTheoNgay(dsNgayChon).setVisible(true);
+            dialogChonNgay.dispose();
+        });
+
+        btnHuy.addActionListener(e -> dialogChonNgay.dispose());
+
+        panelBtn.add(btnXem);
+        panelBtn.add(btnHuy);
+        dialogChonNgay.add(panelBtn, BorderLayout.SOUTH);
+
+        dialogChonNgay.setVisible(true);
     }
 
     // ============================== CÁC HÀM HỖ TRỢ ==============================

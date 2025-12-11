@@ -208,7 +208,7 @@ public class DialogChiTietHoaDonTheoNgay extends JDialog {
         for (HoaDon hd : danhSach) {
             String loai = hd.getBanAn() == null ? "Mang đi" : "Tại bàn";
             String ban = hd.getBanAn() != null ? hd.getBanAn().getTenBan() : "—";
-            String kh = hd.getKhachHang() != null ? hd.getKhachHang().getHoTen() : "Khách lẻ";
+            String kh = hd.getKhachHang() != null ? hd.getKhachHang().getHoTen() : "Khách vãng lai";
             String nv = hd.getNhanVien() != null ? hd.getNhanVien().getHoTen() : "—";
 
             modelHoaDon.addRow(new Object[]{
@@ -241,7 +241,7 @@ public class DialogChiTietHoaDonTheoNgay extends JDialog {
                                 value = hd.getNhanVien() != null ? hd.getNhanVien().getHoTen().toLowerCase() : "";
                                 break;
                             case "Khách hàng":
-                                value = hd.getKhachHang() != null ? hd.getKhachHang().getHoTen().toLowerCase() : "khách lẻ";
+                                value = hd.getKhachHang() != null ? hd.getKhachHang().getHoTen().toLowerCase() : "khách vãng lai";
                                 break;
                             case "Bàn":
                                 value = hd.getBanAn() != null ? hd.getBanAn().getTenBan().toLowerCase() : "mang đi";

@@ -447,7 +447,7 @@ select * from ChiTietHoaDon
 
 select * from KhachHang
 
-
+go
 -- Tạo bảng lưu nhật ký thao tác
 CREATE TABLE NhatKyThaoTac (
     maLog INT IDENTITY(1,1) PRIMARY KEY,
@@ -465,13 +465,14 @@ CREATE TABLE NhatKyThaoTac (
 );
 
 
-
+go
 -- Index để tìm kiếm nhanh
 CREATE INDEX IX_NhatKy_MaNV ON NhatKyThaoTac(maNV);
 CREATE INDEX IX_NhatKy_TenBang ON NhatKyThaoTac(tenBang);
 CREATE INDEX IX_NhatKy_ThoiGian ON NhatKyThaoTac(thoiGian);
 CREATE INDEX IX_NhatKy_MaDoiTuong ON NhatKyThaoTac(maDoiTuong);
 
+go
 -- View để xem log dễ dàng hơn
 CREATE VIEW V_NhatKyThaoTac AS
 SELECT 
@@ -520,3 +521,9 @@ select * from MonAn
 UPDATE MonAn
 SET soluong = null
 WHERE maMon not LIKE 'DO%';
+
+
+select * from NhanVien
+update NhanVien
+set anhDaiDien = 'img/employees/NV005.png' where anhDaiDien is null
+select * from LichLamViec llv join CaLamViec clv on llv.maCa = clv.maCa
