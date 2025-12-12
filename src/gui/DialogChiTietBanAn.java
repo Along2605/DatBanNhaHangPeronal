@@ -1,6 +1,7 @@
 package gui;
 
 import javax.swing.*;
+
 import javax.swing.border.*;
 import dao.BanAnDAO;
 import dao.PhieuDatBanDAO;
@@ -10,26 +11,31 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
 
+//Callback để refresh màn hình gốc
+interface RefreshCallback {
+	void onRefresh();
+}
+
 public class DialogChiTietBanAn extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final Color MAIN_COLOR = new Color(41, 128, 185);
 
     private BanAnCallback chuyenBanCallback;
+    private RefreshCallback refreshCallback;
     
-    // ✅ THÊM BIẾN LƯU THÔNG TIN NGÀY GIỜ XEM
     private LocalDate ngayXem;
     private int khungGio;
 
-    // ===================================
-    // 🔥 CONSTRUCTOR MỚI: Nhận thêm ngày & khung giờ
-    // ===================================
-    public DialogChiTietBanAn(Frame parent, BanAn banAn, LocalDate ngayXem, int khungGio) {
-        this(parent, banAn, ngayXem, khungGio, null);
+    
+    public DialogChiTietBanAn(Frame parent, BanAn banAn, LocalDate ngayXem, int khungGio, 
+    		RefreshCallback refreshCallback) {
+    	this(parent, banAn, ngayXem, khungGio, null, refreshCallback);
     }
 
-    public DialogChiTietBanAn(Frame parent, BanAn banAn, LocalDate ngayXem, int khungGio, BanAnCallback callback) {
+    public DialogChiTietBanAn(Frame parent, BanAn banAn, LocalDate ngayXem, int khungGio, BanAnCallback chuyenBanCallback, RefreshCallback refreshCallback) {
         super(parent, "Chi tiết bàn ăn", true);
-        this.chuyenBanCallback = callback;
+        this.chuyenBanCallback = chuyenBanCallback;
+        this.refreshCallback = refreshCallback;
         this.ngayXem = ngayXem;
         this.khungGio = khungGio;
 
@@ -166,9 +172,8 @@ public class DialogChiTietBanAn extends JDialog {
             }
         
         }
-        // ============================================
-        // 🔥 XỬ LÝ BÀN ĐÃ ĐẶT (Có phiếu đặt)
-        // ============================================
+        
+        // XỬ LÝ BÀN ĐÃ ĐẶT (Có phiếu đặt)
         else if ("Đã đặt".equals(trangThai)) {
             JButton btnXemPhieuDat = createButton("Xem phiếu đặt", MAIN_COLOR);
             btnXemPhieuDat.addActionListener(e -> {
@@ -221,9 +226,7 @@ public class DialogChiTietBanAn extends JDialog {
             buttonPanel.add(btnXemPhieuDat, 0);
         }
         
-        // ============================================
-        // 🔥 XỬ LÝ TRẠNG THÁI KHÁC
-        // ============================================
+        // XỬ LÝ TRẠNG THÁI KHÁC
         else if (trangThai != null && trangThai.contains("(hôm nay)")) {
             JLabel lblNote = new JLabel("Bàn này đang bận hôm nay, sẽ trống vào ngày đã chọn");
             lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 12));
@@ -238,15 +241,53 @@ public class DialogChiTietBanAn extends JDialog {
         add(mainPanel);
     }
 
-    // ===================================
+    private void moFormDatBan(String maBan) {
+        try {
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+            
+            // Tạo dialog đặt bàn
+            JDialog dialog = new JDialog(parentFrame, "Đặt bàn", true);
+            dialog.setSize(1200, 700);
+            dialog.setLocationRelativeTo(parentFrame);
+            
+            // Tạo panel DatBan
+            DatBan panelDatBan = new DatBan();
+            
+            // ✅ TỰ ĐỘNG ĐIỀN THÔNG TIN
+            panelDatBan.tuDongDienThongTin(maBan, ngayXem, khungGio);
+            
+            dialog.add(panelDatBan);
+            dialog.setVisible(true);
+            
+            // ✅ SAU KHI ĐÓNG DIALOG ĐẶT BÀN
+            dispose(); // Đóng dialog chi tiết
+            
+            // Gọi callback refresh
+            if (refreshCallback != null) {
+                refreshCallback.onRefresh();
+            }
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi khi mở form đặt bàn: " + ex.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+	// ===================================
     // Constructor cũ (backward compatible)
     // ===================================
     public DialogChiTietBanAn(Frame parent, BanAn banAn) {
-        this(parent, banAn, null, 0, null);
+        this(parent, banAn, null, 0, null, null);
     }
 
     public DialogChiTietBanAn(Frame parent, BanAn banAn, BanAnCallback callback) {
-        this(parent, banAn, null, 0, callback);
+        this(parent, banAn, null, 0, callback, null);
+    }
+    
+    public DialogChiTietBanAn(Frame parent, BanAn banAn, LocalDate ngayXem, int khungGio) {
+        this(parent, banAn, ngayXem, khungGio, null, null);
     }
 
     private void addInfoRow(JPanel panel, GridBagConstraints gbc, int row, String label, String value) {

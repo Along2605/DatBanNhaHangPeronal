@@ -568,11 +568,11 @@ public class DialogChiTietPhieuDat extends JDialog{
             panel.add(btnHuyPhieu);
         }
         
-        // Nút In phiếu
-        JButton btnInPhieu = createButton("In phiếu", new Color(103, 58, 183));
-        btnInPhieu.setPreferredSize(new Dimension(160, 40));
-        btnInPhieu.addActionListener(e -> inPhieu());
-        panel.add(btnInPhieu);
+//        // Nút In phiếu
+//        JButton btnInPhieu = createButton("In phiếu", new Color(103, 58, 183));
+//        btnInPhieu.setPreferredSize(new Dimension(160, 40));
+//        btnInPhieu.addActionListener(e -> inPhieu());
+//        panel.add(btnInPhieu);
         
         // Nút Đóng
         JButton btnDong = createButton("Đóng", new Color(100, 100, 100));

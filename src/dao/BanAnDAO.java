@@ -18,11 +18,11 @@ public class BanAnDAO {
 	
 	private KhuVucDAO khuVucDAO = new KhuVucDAO();
     private LoaiBanDAO loaiBanDAO = new LoaiBanDAO();
-	public List<BanAn> getAllBanAn() {
+    public List<BanAn> getAllBanAn() {
 	    List<BanAn> dsBanAn = new ArrayList<>();
 	    
 	    String sql = """
-	    	    SELECT b.*, k.tenKhuVuc, l.tenLoaiBan
+	    	    SELECT b.*, k.tenKhuVuc, k.viTri, l.tenLoaiBan
 	    	    FROM BanAn b
 	    	    LEFT JOIN KhuVuc k ON b.maKhuVuc = k.maKhuVuc
 	    	    LEFT JOIN LoaiBanAn l ON b.maLoaiBan = l.maLoaiBan
@@ -44,12 +44,11 @@ public class BanAnDAO {
 	            String trangThai = rs.getString("trangThai");
 	            String maKhuVuc = rs.getString("maKhuVuc");
 	            String tenKhuVuc = rs.getString("tenKhuVuc");
+	            String viTri = rs.getString("viTri"); 
+
 	           
 	          
-	            KhuVuc khuVuc = null;
-	            if (maKhuVuc != null) {
-	                khuVuc = new KhuVuc(maKhuVuc, tenKhuVuc, null); // viTri không được lấy trong truy vấn này
-	            }
+	            KhuVuc khuVuc = new KhuVuc(maKhuVuc, tenKhuVuc, viTri);
 	            
 	            String ghiChu = rs.getString("ghiChu");
 	            
@@ -304,13 +303,14 @@ public class BanAnDAO {
 		Connection con = ConnectDB.getConnection();
 		PreparedStatement ps = null;
 		try {
-			// 🔥 SỬA: Chỉ lấy hóa đơn của NGÀY HÔM NAY
-			String sql = "SELECT TOP 1 maHoaDon FROM HoaDon " +
-			             "WHERE maBan = ? " +
-			             "AND trangThai = N'Chưa thanh toán' " +
-			             "AND CAST(ngayLapHoaDon AS DATE) = CAST(GETDATE() AS DATE)";
+			String sql = "SELECT TOP 1 maHoaDon "
+					+ "FROM HoaDon hd "
+					+ "Join ChiTietDatBan ct "
+					+ "On hd.maPhieuDat = ct.maPhieuDat "
+					+ "WHERE hd.trangThai = N'Chưa thanh toán' And (hd.maBan = ? or ct.maBan = ?)";
 			ps = con.prepareStatement(sql);
 			ps.setString(1, maBan);
+			ps.setString(2, maBan);
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				return rs.getString("maHoaDon");
@@ -357,20 +357,8 @@ public class BanAnDAO {
 	    }
 	}	
 	
-	/**
-	 * Lấy danh sách bàn trống theo ngày và khung giờ cụ thể
-	 * @param ngayDat Ngày đặt bàn (LocalDate)
-	 * @param khungGio Khung giờ (1: Sáng, 2: Trưa, 3: Chiều, 4: Tối)
-	 * @return Danh sách bàn trống trong khung giờ đó
-	 */
-	/**
-	 * Lấy danh sách bàn trống theo ngày và khung giờ cụ thể.
-	 * Bàn trống = Không hỏng/bảo trì VÀ không có phiếu đặt trong khung giờ đó.
-	 * 
-	 * @param ngayDat Ngày cần kiểm tra
-	 * @param khungGio Khung giờ (1: Sáng, 2: Trưa, 3: Chiều, 4: Tối)
-	 * @return Danh sách bàn khả dụng
-	 */
+	
+	 // Lấy danh sách bàn trống theo ngày và khung giờ cụ thể	
 	public List<BanAn> getDSBanTrongTheoKhungGio(java.time.LocalDate ngayDat, int khungGio) {
 	    List<BanAn> dsBan = new ArrayList<>();
 	    

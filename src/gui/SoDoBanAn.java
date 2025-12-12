@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
+import java.util.Timer;
 
 import connectDB.ConnectDB;
 import dao.BanAnDAO;
@@ -160,16 +161,16 @@ public class SoDoBanAn extends JPanel {
 				}
 			});
 
-//			for (String viTriKey : sortedKeys) {
-//				JPanel pnViTri = new JPanel(new GridLayout(0, 3, 10, 10));
-//				pnViTri.setBorder(BorderFactory.createTitledBorder(viTriKey));
-//				for (BanAn b : kVBanAn.get(viTriKey)) {
-//					pnViTri.add(taoBan(b.getKhuVuc().getTenKhuVuc(), b.getTenBan(), b.getTrangThai(),
-//							b.getLoaiBan().getTenLoaiBan(), b));
-//				}
-//				pnDanhSachBan.add(pnViTri);
-//				pnDanhSachBan.add(Box.createRigidArea(new Dimension(0, 10)));
-//			}
+			for (String viTriKey : sortedKeys) {
+				JPanel pnViTri = new JPanel(new GridLayout(0, 3, 10, 10));
+				pnViTri.setBorder(BorderFactory.createTitledBorder(viTriKey));
+				for (BanAn b : kVBanAn.get(viTriKey)) {
+					pnViTri.add(taoBan(b.getKhuVuc().getTenKhuVuc(), b.getTenBan(), b.getTrangThai(),
+							b.getLoaiBan().getTenLoaiBan(), b));
+				}
+				pnDanhSachBan.add(pnViTri);
+				pnDanhSachBan.add(Box.createRigidArea(new Dimension(0, 10)));
+			}
 
 			pnDanhSachBan.revalidate();
 			pnDanhSachBan.repaint();
@@ -198,7 +199,24 @@ public class SoDoBanAn extends JPanel {
 
 		List<BanAn> dsBan = ban_DAO.getAllBanAn();
 		Map<String, List<BanAn>> kVBanAn = new LinkedHashMap<>();
+		//Thông báo bàn đã đặt
+		kiemTraBan();
+		// CHỉ load trạng thái đã đặt trong 30 phút tới
+		LocalDateTime now = LocalDateTime.now();
 		for (BanAn b : dsBan) {
+			if ("Đã đặt".equals((b.getTrangThai()))) {
+				PhieuDatBan phieuDat = phieuDat_DAO.getPhieuDatTheoBan(b.getMaBan());
+
+				if (phieuDat == null) {
+					continue;
+				}
+				LocalDateTime ngayDat = phieuDat.getNgayDat();
+
+				// Nếu thời gian đặt sau 45 phút so với hiện tại thì không khóa bàn
+				if (ngayDat.isAfter(now.plusMinutes(45))) {
+					continue;
+				}
+			}
 			kVBanAn.computeIfAbsent(b.getKhuVuc().getViTri(), k -> new ArrayList<>()).add(b);
 		}
 
@@ -262,76 +280,83 @@ public class SoDoBanAn extends JPanel {
 		case "Trống" -> new Color(255, 240, 240);
 		case "Đang phục vụ" -> new Color(235, 255, 235);
 		case "Đã đặt" -> new Color(240, 240, 255);
-		case "Bảo trì" -> new Color(255, 250, 230);
+		case "Đang dọn dẹp" -> new Color(255, 250, 230);
 		default -> new Color(240, 240, 240);
 		};
 		pnBan.setBackground(bg);
-		
-		if (trangThai.equals("Đã đặt")) {
-		    // Sửa: dùng hàm đúng tên và kiểm tra null
-		    PhieuDatBan phieuDat = phieuDat_DAO.layPhieuDatHienTaiCuaBan(ban.getMaBan());
 
-		    if (phieuDat != null && phieuDat.getNgayDat() != null) {
-		        LocalDateTime ngayDat = phieuDat.getNgayDat();
-		        String ngay = ngayDat.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-		        String gio = ngayDat.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+		if ("Đã đặt".equals(trangThai)) {
+			PhieuDatBan phieuDat = phieuDat_DAO.getPhieuDatTheoBan(ban.getMaBan());
 
-		        JLabel lblThongTin = new JLabel("<html>"
-		                + "<span style='font-family:Segoe UI; font-size:12px;'>"
-		                + "<b>Khách:</b> " + (phieuDat.getKhachHang() != null ? phieuDat.getKhachHang().getHoTen() : "Chưa rõ") + "<br>"
-		                + "<b>Ngày đặt: </b> " + ngay + "<br>"
-		                + "<b>Giờ đặt: </b> " + gio + "<br>"
-		                + "</span></html>");
+			if (phieuDat == null) {
+				return pnBan;
+			}
+			LocalDateTime ngayDat = phieuDat.getNgayDat();
+			String ngay = ngayDat.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+			String gio = ngayDat.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+			if (phieuDat != null) {
+				JLabel lblThongTin = new JLabel("<html>" + "<span style='font-family:Segoe UI; font-size:12px;'>"
+						+ "<b>Khách:</b> " + phieuDat.getKhachHang().getHoTen() + "<br>" + "<b>Ngày đặt: </b> " + ngay
+						+ "<br>" + "<b>Giờ đặt: </b> " + gio + "<br>" + "</span></html>");
+				lblThongTin.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-		        lblThongTin.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-		        lblThongTin.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-
-		        JPanel pnThongTin = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		        pnThongTin.setOpaque(false);
-		        pnThongTin.add(lblThongTin);
-		        pnBan.add(pnThongTin, BorderLayout.CENTER);
-		    }
-		    // Nếu phieuDat == null → không làm gì cả, không crash
+				lblThongTin.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+				JPanel pnThongTin = new JPanel(new FlowLayout(FlowLayout.CENTER));
+				pnThongTin.setOpaque(false);
+				pnThongTin.add(lblThongTin);
+				pnBan.add(pnThongTin, BorderLayout.CENTER);
+			}
 		}
 
 		pnBan.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
-				lblTitle.setText("CHUYỂN BÀN");
 				if (banCanChuyen != null) {
-					if (ban.getTrangThai().equals("Trống")) {
+					// Chuyển đến bàn hiện tại
+					if (ban.getMaBan().equals(banCanChuyen.getMaBan())) {
+						JOptionPane.showMessageDialog(pnBan, "Bạn đang chọn lại bàn nguồn!\nHãy chọn bàn đích khác.");
+						return;
+					}
+					String maHDCu1 = ban_DAO.layMaHDTuBan(banCanChuyen.getMaBan());
+					// Chuyển bàn
+					if ("Trống".equals(ban.getTrangThai())) {
 						int xacNhan = JOptionPane.showConfirmDialog(pnBan,
 								"Chuyển từ bàn " + banCanChuyen.getTenBan() + " sang bàn " + ban.getTenBan() + "?",
 								"Xác nhận", JOptionPane.YES_NO_CANCEL_OPTION);
-
+						// Xác nhận chuyển
 						if (xacNhan == JOptionPane.YES_OPTION) {
 							try {
-								String maHDCu = ban_DAO.layMaHDTuBan(banCanChuyen.getMaBan());
-								System.out.println("- Mã hóa đơn cũ: " + maHDCu);
+//								String maHDCu = ban_DAO.layMaHDTuBan(banCanChuyen.getMaBan());
+								System.out.println("- Mã hóa đơn cũ: " + maHDCu1);
 
-								boolean updateHD = hoaDon_DAO.chuyenBan(maHDCu, ban.getMaBan());
-								
+								if (maHDCu1 == null) {
+									JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thấy bại!");
+									return;
+								}
+								boolean updateHD = hoaDon_DAO.chuyenBan(maHDCu1, ban.getMaBan());
 								if (!updateHD) {
-									JOptionPane.showMessageDialog(null, "Cập nhật hóa đơn thất bại!");
+									JOptionPane.showMessageDialog(null, "Chuyển bàn thất bại!");
 									return;
 								}
 								ban_DAO.capNhatTrangThaiBan(banCanChuyen.getMaBan(), "Trống");
 								ban_DAO.capNhatTrangThaiBan(ban.getMaBan(), "Đang sử dụng");
 
 								JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thành công!");
-								
+								loadBanAn();
+
 								if (chuyenBanCallback != null) {
 									chuyenBanCallback.onBanSelected(banCanChuyen, ban, true);
 								}
 
 								banCanChuyen = null;
-								loadBanAn();
 							} catch (Exception e2) {
 								e2.printStackTrace();
 								JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thất bại!");
 							}
 						}
-					} else if ("Đang sử dụng".equals(ban.getTrangThai())) {
+					}
+					// Gộp bàn
+					else if ("Đang sử dụng".equals(ban.getTrangThai())) {
 
 						String maBanCu = banCanChuyen.getMaBan();
 						String maBanMoi = ban.getMaBan();
@@ -339,33 +364,40 @@ public class SoDoBanAn extends JPanel {
 						String maHDCu = ban_DAO.layMaHDTuBan(maBanCu);
 						String maHDDich = ban_DAO.layMaHDTuBan(maBanMoi);
 
+						if (maHDCu == null) {
+							JOptionPane.showMessageDialog(null, "Bàn nguồn không có hóa đơn nên không thể gộp!");
+							banCanChuyen = null;
+							return;
+						}
+
 						try {
-							if(maHDDich == null) {
-								JOptionPane.showMessageDialog(null, "Bàn " + ban.getTenBan() + " chưa có hóa đơn nên không thể gộp bàn!");
+							if (maHDDich == null) {
+								JOptionPane.showMessageDialog(null,
+										"Bàn " + ban.getTenBan() + " chưa có hóa đơn nên không thể gộp bàn!");
 								return;
 							}
-							boolean  gopHD = ctHD_DAO.gopHoaDon(maHDCu, maHDDich, maBanCu, maBanMoi);
-							if(!gopHD) {
+
+							boolean gopHD = ctHD_DAO.gopHoaDon(maHDCu, maHDDich, maBanCu, maBanMoi);
+							if (!gopHD) {
 								JOptionPane.showMessageDialog(null, "Không thể xóa hóa đơn nguồn!");
 								return;
 							}
-							
+
 							ban_DAO.capNhatTrangThaiBan(maBanCu, "Trống");
 							JOptionPane.showMessageDialog(null, "Gộp bàn thành công!");
-							banCanChuyen = null;
 							loadBanAn();
+							banCanChuyen = null;
 
 						} catch (Exception e1) {
 							e1.printStackTrace();
 							JOptionPane.showMessageDialog(null, "Gộp bàn thất bại!");
 						}
-
 					}
-
-				} else {
+				}
+				// Xem bàn chi tiết
+				else {
 					DialogChiTietBanAn dialog = new DialogChiTietBanAn((Frame) SwingUtilities.getWindowAncestor(pnBan),
-							ban, 
-							((banNguon, banDich, sussecces) -> {
+							ban, ((banNguon, banDich, sussecces) -> {
 								banCanChuyen = banNguon;
 								isChuyenMode = sussecces;
 								loadBanAn();
@@ -379,7 +411,7 @@ public class SoDoBanAn extends JPanel {
 
 		return pnBan;
 	}
-	
+
 	private JButton createButton(String text, String iconPath) {
 		JButton button = new JButton(text);
 		button.setFont(new Font("Arial", Font.BOLD, 14));
@@ -402,6 +434,37 @@ public class SoDoBanAn extends JPanel {
 
 		return button;
 	}
+
+	private void kiemTraBan() {
+		LocalDateTime now = LocalDateTime.now();
+		List<BanAn> dsBan = ban_DAO.getAllBanAn();
+		for(BanAn ban : dsBan) {
+			if("Đang sử dụng".equals(ban.getTrangThai())) {
+				PhieuDatBan phieuDat = phieuDat_DAO.getPhieuDatTheoBan(ban.getMaBan());
+				if(phieuDat == null) return;
+				
+				LocalDateTime ngayDat = phieuDat.getNgayDat();
+				if(ngayDat.isBefore(now.plusMinutes(15))) {
+					JOptionPane.showMessageDialog(null,
+					        "Bàn " + ban.getTenBan() + " sắp được đặt lúc " + ngayDat.format(DateTimeFormatter.ofPattern("HH:mm")) +
+					        ". Vui lòng thông báo khách chuyển bàn!",
+					        "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+				}
+			}
+			if("Đang dọn dẹp".equals(ban.getTrangThai())) {
+				Timer timer = new Timer();
+				timer.schedule(new TimerTask() {
+					
+					@Override
+					public void run() {
+						ban_DAO.capNhatTrangThaiBan(ban.getMaBan(), "Trống");
+						System.out.println("Bàn " + ban.getTenBan() + "đâ chuyển sang trạng thái trống!");
+					}
+				}, 1 * 60 * 100);
+			}
+		}
+	}
+	
 	
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {

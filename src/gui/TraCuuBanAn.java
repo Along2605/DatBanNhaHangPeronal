@@ -24,8 +24,11 @@ import java.awt.Frame;
 import javax.swing.SwingUtilities;
 
 import dao.BanAnDAO;
+import dao.KhuVucDAO;
+import dao.LoaiBanDAO;
 import dao.PhieuDatBanDAO;
 import entity.BanAn;
+import entity.LoaiBan;
 import entity.PhieuDatBan;
 
 public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener{
@@ -34,6 +37,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     
     // Thêm biến để callback khi đặt bàn thành công
     private Runnable onDatBanSuccess;
+    private Runnable refreshCallback;
     
     // Components
     private JTextField txtMaBan;
@@ -62,6 +66,8 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     private JButton btnXemChiTiet;
     
     BanAnDAO dao = new BanAnDAO();
+    private KhuVucDAO khuVucDAO = new KhuVucDAO();
+    private LoaiBanDAO loaiBanDAO = new LoaiBanDAO();
     
     // Colors
     private final Color MAIN_COLOR = new Color(214, 116, 76);
@@ -79,6 +85,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 
 	public TraCuuBanAn(Runnable onDatBanSuccess) {
 	    this.onDatBanSuccess = onDatBanSuccess;
+	    this.refreshCallback = onDatBanSuccess;
 	    setLayout(new BorderLayout(10, 10));
 	    setBackground(BACKGROUND_COLOR);
 	    setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -141,15 +148,17 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         addFormField(formPanel, gbc, 1, "Tên bàn:", txtTenBan = createTextField());
         
         // Khu vực
-        cboKhuVuc = createComboBox(new String[]{"-- Tất cả --", "Khu gia đình", "Khu VIP", "Khu couple", "Khu BBQ ngoài trời", "Phòng riêng Hanok"});
+        cboKhuVuc = createComboBox(new String[]{"-- Tất cả --"});
+        loadKhuVucData();
         addFormField(formPanel, gbc, 2, "Khu vực:", cboKhuVuc);
-        
+              
         // Trạng thái (4 trạng thái chuẩn)
         cboTrangThai = createComboBox(new String[]{"-- Tất cả --", "Trống", "Đã đặt", "Đang sử dụng", "Bảo trì"});
         addFormField(formPanel, gbc, 3, "Trạng thái:", cboTrangThai);
         
         // Loại bàn
-        cboLoaiBan = createComboBox(new String[]{"-- Tất cả --", "VIP", "Gia đình", "Couple", "BBQ", "Phòng riêng"});
+        cboLoaiBan = createComboBox(new String[]{"-- Tất cả --"});
+        loadLoaiBanData();
         addFormField(formPanel, gbc, 4, "Loại bàn:", cboLoaiBan);
 
         // Số lượng chỗ
@@ -178,7 +187,35 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         return mainPanel;
     }
     
-    /**
+    private void loadLoaiBanData() {
+        try {
+            List<LoaiBan> dsLoaiBan = loaiBanDAO.getAllLoaiBan();
+            for (LoaiBan lb : dsLoaiBan) {
+                cboLoaiBan.addItem(lb.getTenLoaiBan());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi tải danh sách loại bàn: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadKhuVucData() {
+        try {
+            ArrayList<String> dsKhuVuc = khuVucDAO.layTenKhuVuc();
+            for (String tenKhuVuc : dsKhuVuc) {
+                cboKhuVuc.addItem(tenKhuVuc);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi tải danh sách khu vực: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+	/**
      * Tạo panel bảng dữ liệu
      */
     private JPanel createTablePanel() {
@@ -290,92 +327,20 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         btnXemChiTiet.setPreferredSize(new Dimension(150, 40));
         
         // ✅ THÊM NÚT ĐẶT BÀN NHANH
-        JButton btnDatBanNhanh = createButton("Đặt bàn nhanh", new Color(76, 175, 80));
-        btnDatBanNhanh.setPreferredSize(new Dimension(150, 40));
-        btnDatBanNhanh.addActionListener(e -> datBanNhanh());
+        
         
 //        btnTaoHoaDon = createButton("Tạo hóa đơn", new Color(76, 175, 80));
 //        btnTaoHoaDon.setPreferredSize(new Dimension(150, 40));
         
         panel.add(btnXemChiTiet);
 //        panel.add(btnTaoHoaDon);
-        panel.add(btnDatBanNhanh);        
+           
         btnXemChiTiet.addActionListener(this);
 //        btnTaoHoaDon.addActionListener(this);
         
         return panel;
     }
-    
-    private void datBanNhanh() {
-	    int selectedRow = tableBanAn.getSelectedRow();
-	    
-	    if (selectedRow == -1) {
-	        JOptionPane.showMessageDialog(this,
-	            "Vui lòng chọn một bàn để đặt!",
-	            "Thông báo", JOptionPane.WARNING_MESSAGE);
-	        return;
-	    }
-    
-	    String maBan = tableModel.getValueAt(selectedRow, 0).toString();
-	    String trangThai = tableModel.getValueAt(selectedRow, 4).toString();
-    
-	    // Kiểm tra bàn có trống không
-	    if (!trangThai.equals("Trống")) {
-	        int confirm = JOptionPane.showConfirmDialog(this,
-	            "Bàn này đang ở trạng thái: " + trangThai + "\n" +
-	            "Bạn vẫn muốn đặt bàn này?",
-	            "Xác nhận", JOptionPane.YES_NO_OPTION);
-	        
-	        if (confirm != JOptionPane.YES_OPTION) {
-	            return;
-	        }
-	    }
-    
-	    // Lấy thông tin ngày giờ đang xem
-	    Date date = dateFilter.getDate();
-	    if (date == null) date = new Date();
-	    LocalDate ngayXem = new java.sql.Date(date.getTime()).toLocalDate();
-	    int khungGio = cboTimeFilter.getSelectedIndex() + 1;
-	    
-	    // Mở form đặt bàn với thông tin đã chọn
-	    moFormDatBan(maBan, ngayXem, khungGio);
-    }
-    
-    
-    // Method mở form đặt bàn
-    private void moFormDatBan(String maBanChon, LocalDate ngayDat, int khungGio) {
-        try {
-            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
-            
-            // Tạo dialog đặt bàn
-            JDialog dialog = new JDialog(parentFrame, "Đặt bàn", true);
-            dialog.setSize(1400, 800);
-            dialog.setLocationRelativeTo(parentFrame);
-            
-            // Tạo panel DatBan
-            DatBan panelDatBan = new DatBan();
-            
-            // ✅ TỰ ĐỘNG ĐIỀN THÔNG TIN
-            panelDatBan.tuDongDienThongTin(maBanChon, ngayDat, khungGio);
-            
-            dialog.add(panelDatBan);
-            dialog.setVisible(true);
-            
-            // Refresh lại danh sách sau khi đóng dialog
-            loadDanhSachBanAn();
-            
-            // Callback nếu có
-            if (onDatBanSuccess != null) {
-                onDatBanSuccess.run();
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-                "Lỗi khi mở form đặt bàn: " + e.getMessage(),
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
+   
 
 	/**
      * Thêm field vào form
@@ -626,14 +591,8 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             return;
         }
         
-        // ✅ LẤY THÔNG TIN TỪ BẢNG HIỂN THỊ (đã xử lý trạng thái đúng)
         String maBan = tableModel.getValueAt(selectedRow, 0).toString();
-        String tenBan = tableModel.getValueAt(selectedRow, 1).toString();
-        int soLuongCho = Integer.parseInt(tableModel.getValueAt(selectedRow, 2).toString());
-        String tenLoaiBan = tableModel.getValueAt(selectedRow, 3).toString();
-        String trangThaiHienThi = tableModel.getValueAt(selectedRow, 4).toString(); // ← TRẠNG THÁI ĐÃ XỬ LÝ
-        String tenKhuVuc = tableModel.getValueAt(selectedRow, 5).toString();
-        String ghiChu = tableModel.getValueAt(selectedRow, 6).toString();
+        String trangThaiHienThi = tableModel.getValueAt(selectedRow, 4).toString();
         
         // Lấy thông tin chi tiết từ database
         BanAn banAn = dao.getBanTheoMa(maBan);
@@ -645,24 +604,34 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             return;
         }
         
-        // ✅ GHI ĐÈ TRẠNG THÁI BẰNG TRẠNG THÁI ĐÃ XỬ LÝ
+        // ✅ GHI ĐÈ TRẠNG THÁI
         banAn.setTrangThai(trangThaiHienThi);
         
-        // Truyền ngày & khung giờ đang xem
         try {
             Date date = dateFilter.getDate();
             if (date == null) date = new Date();
             LocalDate ngayXem = new java.sql.Date(date.getTime()).toLocalDate();
+            int khungGio = cboTimeFilter.getSelectedIndex() + 1;
             
-            int khungGio = cboTimeFilter.getSelectedIndex() + 1; // 1-4
-            
-            // Gọi constructor với đầy đủ tham số
-            new DialogChiTietBanAn(
+            // ✅ TẠO DIALOG VỚI CALLBACK REFRESH
+            DialogChiTietBanAn dialog = new DialogChiTietBanAn(
                 (Frame) SwingUtilities.getWindowAncestor(this), 
                 banAn,
                 ngayXem,
-                khungGio
-            ).setVisible(true);
+                khungGio,
+                () -> {
+                    // Callback: Refresh sau khi đặt bàn/thay đổi
+                    loadDanhSachBanAn();
+                    if (refreshCallback != null) {
+                        refreshCallback.run();
+                    }
+                }
+            );
+            
+            dialog.setVisible(true);
+            
+            // Refresh sau khi đóng dialog
+            loadDanhSachBanAn();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -694,7 +663,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
                 case "Đã đặt":
                     banDaDat++;
                     break;
-                case "Đang dọn":
+                case "Bảo trì":
                     banDangDon++;
                     break;
             }
@@ -702,7 +671,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         
        
         lblThongTin.setText(String.format(
-                "Tổng số bàn: %d  |  Trống: %d  |  Đang dùng: %d  |  Đã đặt: %d  |  Đang dọn: %d",
+                "Tổng số bàn: %d  |  Trống: %d  |  Đang dùng: %d  |  Đã đặt: %d  |  Bảo trì: %d",
                 tongSoBan, banTrong, banDangSuDung, banDaDat, banDangDon
         ));
     }

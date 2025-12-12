@@ -104,6 +104,7 @@ public class ManHinhChinhQuanLy extends JFrame {
 		menuBar.add(menuBuilder.createTrangChu());
 		menuBar.add(menuBuilder.createMonAnMenu());
 		menuBar.add(menuBuilder.createBanAnMenu());
+		menuBar.add(menuBuilder.createPhieuDatMenu());
 		menuBar.add(menuBuilder.createKhuVucMenu());
 		menuBar.add(menuBuilder.createCaLamMenu());
 		menuBar.add(menuBuilder.createNhanVienMenu());
@@ -195,6 +196,13 @@ public class ManHinhChinhQuanLy extends JFrame {
 
 			return menu;
 		}
+		
+		 public JMenu createPhieuDatMenu() {
+	            JMenu menu = createMenu("Phiếu đặt");
+	            menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuPhieuDat())));
+	            
+	            return menu;
+	       }
 
 		public JMenu createKhuVucMenu() {
 			JMenu menu = createMenu("Khu vực");

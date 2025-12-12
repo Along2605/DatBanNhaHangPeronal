@@ -16,9 +16,12 @@ import com.toedter.calendar.JDateChooser;
 
 import dao.BanAnDAO;
 import dao.KhachHangDAO;
+import dao.KhuVucDAO;
+import dao.LoaiBanDAO;
 import dao.PhieuDatBanDAO;
 import entity.BanAn;
 import entity.KhachHang;
+import entity.LoaiBan;
 import entity.NhanVien;
 import entity.PhieuDatBan;
 import util.Session;
@@ -61,6 +64,8 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     private String maKhachHang = null;
     
     BanAnDAO banAnDAO = new BanAnDAO();
+    private KhuVucDAO khuVucDAO = new KhuVucDAO();
+    private LoaiBanDAO loaiBanDAO = new LoaiBanDAO();
     // Colors
     private final Color MAU_CAM = new Color(214, 116, 76); // MAIN_COLOR
     private final Color MAU_CAM_SANG = new Color(234, 136, 96); // HOVER_COLOR
@@ -239,11 +244,13 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         gbc.gridwidth = 1;
         
         // Khu vực
-        cboKhuVuc = createComboBox(new String[]{"-- Tất cả --", "Tầng 1", "Tầng 2", "Sân thượng"});
+        cboKhuVuc = createComboBox(new String[]{"-- Tất cả --"});
+        loadKhuVucData();
         addFormField(formPanel, gbc, row++, "Khu vực:", cboKhuVuc);
         
         // Loại bàn
-        cboLoaiBan = createComboBox(new String[]{"-- Tất cả --", "Bàn vuông", "Bàn tròn", "Bàn đôi"});
+        cboLoaiBan = createComboBox(new String[]{"-- Tất cả --"});
+        loadLoaiBanData();
         addFormField(formPanel, gbc, row++, "Loại bàn:", cboLoaiBan);
         
         // Nút tìm bàn
@@ -363,7 +370,39 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         return mainPanel;
     }
     
-    // bảng danh sách bàn trống
+    private void loadLoaiBanData() {
+        try {
+            List<LoaiBan> dsLoaiBan = loaiBanDAO.getAllLoaiBan();
+            for (LoaiBan lb : dsLoaiBan) {
+                cboLoaiBan.addItem(lb.getTenLoaiBan());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi tải danh sách loại bàn: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+
+    private void loadKhuVucData() {
+        try {
+            ArrayList<String> dsKhuVuc = khuVucDAO.layTenKhuVuc();
+            for (String tenKhuVuc : dsKhuVuc) {
+                cboKhuVuc.addItem(tenKhuVuc);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi khi tải danh sách khu vực: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+
+	// bảng danh sách bàn trống
     private JPanel createTablePanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
         panel.setBackground(Color.WHITE);

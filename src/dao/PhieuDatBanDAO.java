@@ -42,85 +42,6 @@ public class PhieuDatBanDAO {
 	        return false;
 	    }
 	}
-	
-	/**
-	 * LẤY PHIẾU ĐẶT BÀN HIỆN TẠI CỦA 1 BÀN
-	 * Ưu tiên: Chờ xác nhận > Đã xác nhận
-	 * Chỉ lấy phiếu đang hoạt động, có trong ChiTietDatBan
-	 * DÙNG CHO SƠ ĐỒ BÀN ĂN - QUAN TRỌNG NHẤT!
-	 */
-	public PhieuDatBan layPhieuDatHienTaiCuaBan(String maBan) {
-	    String sql = """
-	        SELECT TOP 1 
-	            p.maPhieuDat, p.maKH, p.maNV, p.ngayDat, p.khungGio, 
-	            p.soNguoi, p.soTienCoc, p.ghiChu, p.trangThai,
-	            kh.hoTen AS tenKH, kh.sdt,
-	            nv.hoTen AS tenNV
-	        FROM PhieuDatBan p
-	        INNER JOIN ChiTietDatBan ctdb ON p.maPhieuDat = ctdb.maPhieuDat
-	        LEFT JOIN KhachHang kh ON p.maKH = kh.maKH
-	        LEFT JOIN NhanVien nv ON p.maNV = nv.maNV
-	        WHERE ctdb.maBan = ?
-	          AND p.trangThai IN (N'Chờ xác nhận', N'Đã xác nhận')
-	        ORDER BY 
-	            CASE p.trangThai 
-	                WHEN N'Chờ xác nhận' THEN 1 
-	                WHEN N'Đã xác nhận' THEN 2 
-	            END,
-	            p.ngayDat DESC
-	        """;
-
-	    try (Connection con = ConnectDB.getInstance().getConnection();
-	         PreparedStatement ps = con.prepareStatement(sql)) {
-
-	        ps.setString(1, maBan);
-	        try (ResultSet rs = ps.executeQuery()) {
-	            if (rs.next()) {
-	                PhieuDatBan phieu = new PhieuDatBan();
-	                phieu.setMaPhieuDat(rs.getString("maPhieuDat"));
-
-	                // Khách hàng
-	                String maKH = rs.getString("maKH");
-	                if (maKH != null && !maKH.trim().isEmpty()) {
-	                    KhachHang kh = new KhachHang(maKH);
-	                    kh.setHoTen(rs.getString("tenKH"));
-	                    kh.setSdt(rs.getString("sdt"));
-	                    phieu.setKhachHang(kh);
-	                }
-
-	                // Nhân viên
-	                String maNV = rs.getString("maNV");
-	                if (maNV != null && !maNV.trim().isEmpty()) {
-	                    NhanVien nv = new NhanVien(maNV);
-	                    nv.setHoTen(rs.getString("tenNV"));
-	                    phieu.setNhanVien(nv);
-	                }
-
-	                // Các thông tin khác
-	                Timestamp ts = rs.getTimestamp("ngayDat");
-	                if (ts != null) {
-	                    phieu.setNgayDat(ts.toLocalDateTime());
-	                }
-
-	                phieu.setKhungGio(rs.getInt("khungGio"));
-	                phieu.setSoNguoi(rs.getInt("soNguoi"));
-	                phieu.setSoTienCoc(rs.getDouble("soTienCoc"));
-	                phieu.setGhiChu(rs.getString("ghiChu"));
-	                phieu.setTrangThai(rs.getString("trangThai"));
-
-	                // Gán bàn (rất quan trọng cho dialog chi tiết)
-	                BanAn ban = new BanAn(maBan);
-	                phieu.setBanAn(ban);
-
-	                return phieu;
-	            }
-	        }
-	    } catch (Exception e) {
-	        System.err.println("Lỗi khi lấy phiếu đặt của bàn " + maBan);
-	        e.printStackTrace();
-	    }
-	    return null; // Không có phiếu → trả null an toàn
-	}
 
    
     //Sinh mã phiếu đặt tự động dạng: PD + yyMMdd + số thứ tự (3 chữ số)
@@ -559,9 +480,5 @@ public class PhieuDatBanDAO {
 	    
 	    return false;
 	}
-	
-	
-	
-	
 		
 }

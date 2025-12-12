@@ -402,6 +402,7 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
         try {
             tableModel.setRowCount(0);
             
+            // ✅ Lấy TẤT CẢ phiếu đặt
             List<PhieuDatBan> dsPhieu = phieuDatDAO.getAllPhieuDat();
             
             if (dsPhieu == null || dsPhieu.isEmpty()) {
@@ -409,30 +410,9 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
                 return;
             }
             
+            // ✅ Hiển thị tất cả phiếu đặt
             for (PhieuDatBan phieu : dsPhieu) {
-                String tenKhachHang = phieu.getKhachHang() != null 
-                    ? phieu.getKhachHang().getHoTen() 
-                    : "Khách vãng lai";
-                    
-                String sdt = phieu.getKhachHang() != null 
-                    ? phieu.getKhachHang().getSdt() 
-                    : "N/A";
-                    
-                String ngayDat = phieu.getNgayDat().format(dtf);
-                String khungGio = getTenKhungGio(phieu.getKhungGio());
-                String tienCoc = currencyFormat.format(phieu.getSoTienCoc()) + "đ";
-                
-                tableModel.addRow(new Object[]{
-                    phieu.getMaPhieuDat(),
-                    tenKhachHang,
-                    sdt,
-                    ngayDat,
-                    khungGio,
-                    phieu.getSoNguoi(),
-                    tienCoc,
-                    phieu.getTrangThai(),
-                    phieu.getGhiChu() != null ? phieu.getGhiChu() : ""
-                });
+                addPhieuToTable(phieu);
             }
             
             capNhatThongTin();
@@ -461,6 +441,9 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
     /**
      * Tìm kiếm phiếu đặt theo điều kiện
      */
+    /**
+     * Tìm kiếm phiếu đặt theo điều kiện
+     */
     private void timKiemPhieuDat() {
         try {
             String maPhieu = txtMaPhieu.getText().trim();
@@ -476,10 +459,20 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
             LocalDateTime toDateTime = null;
             
             if (fromDate != null) {
-                fromDateTime = new java.sql.Timestamp(fromDate.getTime()).toLocalDateTime();
+                // ✅ Set về 00:00:00 của ngày đó
+                fromDateTime = new java.sql.Timestamp(fromDate.getTime())
+                    .toLocalDateTime()
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0);
             }
             if (toDate != null) {
-                toDateTime = new java.sql.Timestamp(toDate.getTime()).toLocalDateTime().withHour(23).withMinute(59);
+                // ✅ Set về 23:59:59 của ngày đó
+                toDateTime = new java.sql.Timestamp(toDate.getTime())
+                    .toLocalDateTime()
+                    .withHour(23)
+                    .withMinute(59)
+                    .withSecond(59);
             }
             
             // Lấy tất cả phiếu
@@ -536,29 +529,7 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
             // Cập nhật bảng
             tableModel.setRowCount(0);
             for (PhieuDatBan phieu : ketQua) {
-                String tenKhachHang = phieu.getKhachHang() != null 
-                    ? phieu.getKhachHang().getHoTen() 
-                    : "Khách vãng lai";
-                    
-                String sdtKH = phieu.getKhachHang() != null 
-                    ? phieu.getKhachHang().getSdt() 
-                    : "N/A";
-                    
-                String ngayDat = phieu.getNgayDat().format(dtf);
-                String khungGioStr = getTenKhungGio(phieu.getKhungGio());
-                String tienCoc = currencyFormat.format(phieu.getSoTienCoc()) + "đ";
-                
-                tableModel.addRow(new Object[]{
-                    phieu.getMaPhieuDat(),
-                    tenKhachHang,
-                    sdtKH,
-                    ngayDat,
-                    khungGioStr,
-                    phieu.getSoNguoi(),
-                    tienCoc,
-                    phieu.getTrangThai(),
-                    phieu.getGhiChu() != null ? phieu.getGhiChu() : ""
-                });
+                addPhieuToTable(phieu);
             }
             
             capNhatThongTin();
@@ -571,20 +542,52 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
         }
     }
     
-    /**
+    
+    private void addPhieuToTable(PhieuDatBan phieu) {
+        String tenKhachHang = phieu.getKhachHang() != null 
+            ? phieu.getKhachHang().getHoTen() 
+            : "Khách vãng lai";
+            
+        String sdt = phieu.getKhachHang() != null 
+            ? phieu.getKhachHang().getSdt() 
+            : "N/A";
+            
+        String ngayDat = phieu.getNgayDat().format(dtf);
+        String khungGio = getTenKhungGio(phieu.getKhungGio());
+        String tienCoc = currencyFormat.format(phieu.getSoTienCoc()) + "đ";
+        
+        tableModel.addRow(new Object[]{
+            phieu.getMaPhieuDat(),
+            tenKhachHang,
+            sdt,
+            ngayDat,
+            khungGio,
+            phieu.getSoNguoi(),
+            tienCoc,
+            phieu.getTrangThai(),
+            phieu.getGhiChu() != null ? phieu.getGhiChu() : ""
+        });
+    }
+
+	/**
      * Làm mới form
      */
     private void lamMoiForm() {
+        // Reset các trường tìm kiếm
         txtMaPhieu.setText("");
         txtSDTKhachHang.setText("");
         txtTenKhachHang.setText("");
         cboTrangThai.setSelectedIndex(0);
         cboKhungGio.setSelectedIndex(0);
-        dateFrom.setDate(null);
-        dateTo.setDate(new Date());
         
+        // ✅ Reset date picker về null
+        dateFrom.setDate(null);
+        dateTo.setDate(null);
+        
+        // ✅ Load lại TẤT CẢ phiếu đặt
         loadDanhSachPhieuDat();
     }
+    
     
     /**
      * Xem chi tiết phiếu đặt
@@ -602,7 +605,6 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
         String maPhieu = tableModel.getValueAt(selectedRow, 0).toString();
         
         try {
-            // Lấy thông tin phiếu đặt từ database
             PhieuDatBan phieu = phieuDatDAO.timPhieuTheoMaPhieuDat(maPhieu);
             
             if (phieu == null) {
@@ -612,7 +614,6 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
                 return;
             }
             
-            // Lấy danh sách bàn trong phiếu
             List<String> danhSachBan = phieuDatDAO.getDanhSachBanTheoPhieuDat(maPhieu);
             
             if (danhSachBan == null || danhSachBan.isEmpty()) {
@@ -622,7 +623,6 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
                 return;
             }
             
-            // Lấy thông tin bàn đầu tiên (để truyền vào dialog)
             dao.BanAnDAO banAnDAO = new dao.BanAnDAO();
             entity.BanAn banDauTien = banAnDAO.getBanTheoMa(danhSachBan.get(0));
             
@@ -633,7 +633,6 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
                 return;
             }
             
-            // Mở dialog chi tiết phiếu đặt
             DialogChiTietPhieuDat dialog = new DialogChiTietPhieuDat(
                 (Frame) SwingUtilities.getWindowAncestor(this),
                 banDauTien,
@@ -642,8 +641,6 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
             );
             
             dialog.setVisible(true);
-            
-            // Refresh lại dữ liệu sau khi đóng dialog
             loadDanhSachPhieuDat();
             
         } catch (Exception e) {
